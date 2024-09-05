@@ -1,23 +1,22 @@
-# iTop Collector base
+# FleetDM Host Data Collector for iTop
 
-## About
+## Overview
 
-iTop data collectors are simple PHP command line applications to collect data from an external application and load/synchronize the
- information into [iTop](https://github.com/Combodo/iTop) using the data synchronization mechanism built into iTop.
+This PHP-based collector integrates FleetDM with iTop, allowing users to synchronize host data from FleetDM into iTop. The collector retrieves host information from the FleetDM API and pushes the data to iTop’s synchronization mechanism.
 
-This module is a small framework for creating your own data collectors for iTop.
+## Prerequisites
 
-For more information about this module have a look at the [documentation](https://www.itophub.io/wiki/page?id=extensions%3Aitop-data-collector-base).
+- **iTop**: Make sure iTop is installed and accessible.
+- **FleetDM API**: Ensure FleetDM is set up and hosts are enrolled in FleetDM.
+- **PHP**: Installed and configured on the server.
+- **Composer**: Installed to manage dependencies.
 
-## Download
+## Installation
 
-Release packages can be found on the [iTop Hub Store](https://store.itophub.io/en_US/taxons/all-extensions). This is the best way to get
- a running package as those contains all the needed modules and stable code. 
+1. **Download the Collector**
 
-When downloading directly from GitHub (by cloning or downloading as zip) you will get potentially unstable code, and you will miss
- additional modules.  
+   Clone this repository on your desired collector server:
 
-
-## About Us
-
-This iTop module development is sponsored, led and supported by [Combodo](https://www.combodo.com).
+   ```bash
+   git clone https://github.com/your-repo/fleetdm-itop-collector.git
+   cd fleetdm-itop-collector
