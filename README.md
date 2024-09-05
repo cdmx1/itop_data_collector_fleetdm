@@ -15,8 +15,4 @@ This PHP-based collector integrates FleetDM with iTop, allowing users to synchro
 
 1. **Download the Collector**
 
-   Clone this repository on your desired collector server:
-
-   ```bash
-   git clone https://github.com/your-repo/fleetdm-itop-collector.git
-   cd fleetdm-itop-collector
+   Clone this repository on your desired collector server
