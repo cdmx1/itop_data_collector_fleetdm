@@ -1,7 +1,6 @@
 .idea/*
 composer.lock
 vendor/*
-collectors
 /conf/**
 +/conf/params.distrib.xml
 data/*.csv
