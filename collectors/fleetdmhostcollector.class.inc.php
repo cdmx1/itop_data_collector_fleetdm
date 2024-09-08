@@ -1,84 +1,97 @@
 <?php
 
-// Make sure the base Collector class is included
-require_once(__DIR__ . '/../lib/collector.class.inc.php');
+// Ensure the base JsonCollector class is included
+require_once(APPROOT . '/core/collector.class.inc.php');
 
-class fleetdmhostcollector extends Collector
+class fleetdmhostcollector extends JsonCollector
 {
-    /**
-     * Constructor method.
-     *
-     * @param CollectorConfig $oConfig The collector configuration
-     */
-    public function __construct(CollectorConfig $oConfig)
+    public function __construct()
     {
-        parent::__construct($oConfig); // Call the parent constructor
+        parent::__construct();
+        Utils::Log(LOG_INFO, "FleetDMHostCollector constructor called.");
     }
 
     /**
-     * Main logic for running the collector and syncing data.
+     * Initialize collection plan
      *
-     * @param array $syncData Data to be synchronized with iTop
+     * @return void
+     * @throws \IOException
      */
-    public function Run(array $syncData)
+    // Updated method signature to match the parent class
+    public function Run(): void
     {
-        // Log start of data processing
-        CollectorLog::Info('FleetDM Host Collector: Starting data synchronization');
+        // Debugging output
+        $jsonUrl = Utils::GetConfigurationValue('jsonurl', '');
+        Utils::Log(LOG_INFO, "JSON URL from config: " . $jsonUrl);
 
-        // Iterate over each record and prepare it for synchronization
+        Utils::Log(LOG_INFO, "Run method called.");
+
+        // Fetching sync data from a different source or configuration
+        $syncData = $this->getSyncData();
+
         foreach ($syncData as $data) {
-            try {
-                // Prepare the data for iTop synchronization
-                $this->PrepareForSync($data);
+            Utils::Log(LOG_INFO, "Syncing data: ");
+            Utils::Log(LOG_INFO, print_r($data, true));
 
-                // Send data to iTop
+            try {
+                $this->PrepareForSync($data);
                 $this->SendToItop($data);
 
-                // Log successful processing
-                CollectorLog::Info('FleetDM Host Collector: Successfully synchronized data for ' . $data['name']);
+                Utils::Log(LOG_INFO, "Successfully synchronized data for " . $data['name']);
             } catch (Exception $e) {
-                // Log any errors encountered
-                CollectorLog::Error('FleetDM Host Collector: Error while processing ' . $data['name'] . ' - ' . $e->getMessage());
+                Utils::Log(LOG_ERR, "Error while processing " . $data['name'] . " - " . $e->getMessage());
             }
         }
 
-        // Log completion of the process
-        CollectorLog::Info('FleetDM Host Collector: Data synchronization finished');
+        Utils::Log(LOG_INFO, "Data synchronization finished");
     }
 
-    /**
-     * Prepares data for synchronization with iTop.
-     *
-     * @param array $data A single host's data from FleetDM
-     */
-    private function PrepareForSync(array &$data)
+    private function PrepareForSync(array &$data): void
     {
-        // Add any custom logic for preparing or transforming data before sync
-        // For example, you may want to set some default values or modify certain fields
+        Utils::Log(LOG_INFO, "Preparing data for sync: ");
+        Utils::Log(LOG_INFO, print_r($data, true));
+
         if (!isset($data['status'])) {
-            $data['status'] = 'active'; // Set a default status if not provided
+            $data['status'] = 'active';
         }
-
-        // Additional data preparation can go here...
     }
 
-    /**
-     * Sends the prepared data to iTop using the web services.
-     *
-     * @param array $data The prepared data for a single host
-     * @throws Exception If the synchronization fails
-     */
-    private function SendToItop(array $data)
+    private function SendToItop(array $data): void
     {
-        // Build the request to the iTop web service using the data
-        $oRestClient = new RestClient($this->oConfig->Get('itop_url'));
-        $oRestClient->Login($this->oConfig->Get('itop_login'), $this->oConfig->Get('itop_password'));
-
-        // Create or update the host record in iTop
-        $response = $oRestClient->CreateOrUpdate('Server', $data);
-
-        if (!$response->IsSuccess()) {
-            throw new Exception('Failed to sync host with iTop: ' . $response->GetMessage());
+        Utils::Log(LOG_DEBUG, "Sending data to iTop: ");
+        Utils::Log(LOG_DEBUG, print_r($data, true));
+    
+        $itopUrl = Utils::GetConfigurationValue('itop_url', '');
+        $itopLogin = Utils::GetConfigurationValue('itop_login', '');
+        $itopPassword = Utils::GetConfigurationValue('itop_password', '');
+    
+        $oRestClient = new RestClient();
+        $result = $oRestClient->CheckCredentials($itopLogin, $itopPassword);
+    
+        if ($result['code'] != 0) {
+            $errorMsg = 'Failed to authenticate with iTop: ' . $result['message'];
+            Utils::Log(LOG_ERR, $errorMsg);
+            throw new Exception($errorMsg);
         }
+    
+        $response = $oRestClient->CreateOrUpdate('Server', $data, '');
+    
+        if (!$response['code'] == 0) {
+            $errorMsg = 'Failed to sync host with iTop: ' . $response['message'];
+            Utils::Log(LOG_ERR, $errorMsg);
+            throw new Exception($errorMsg);
+        }
+    
+        Utils::Log(LOG_INFO, 'Successfully synchronized data with iTop.');
+    }
+
+    // Define a method to fetch sync data if needed
+    private function getSyncData(): array
+    {
+        // Implementation to fetch synchronization data
+        return [
+            ['name' => 'Server1', 'status' => 'active'],
+            ['name' => 'Server2', 'status' => 'inactive'],
+        ];
     }
 }

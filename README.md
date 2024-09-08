@@ -16,3 +16,8 @@ This PHP-based collector integrates FleetDM with iTop, allowing users to synchro
 1. **Download the Collector**
 
    Clone this repository on your desired collector server
+
+   To Test the collector run below commands to install deps:
+   sudo apt install php7.4 php7.4-xml 
+
+   php ./exec.php

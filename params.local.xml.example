@@ -42,7 +42,7 @@
 
   <!-- FleetDM JSON collector settings -->
   <!-- Define path or URL for the JSON file to collect host data from FleetDM -->
-  <jsonurl>https://fdm.cdmx.io/api/v1/fleet/hosts</jsonurl>
+  <jsonurl>https://xxx.xxx.xx/api/v1/fleet/hosts</jsonurl>
   
   <!-- Optional POST data for JSON retrieval, if needed -->
   <jsonpost>
