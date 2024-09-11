@@ -18,6 +18,7 @@ class RestClient
 {
 	protected $sVersion;
 
+
 	public function __construct()
 	{
 		$this->sVersion = '1.0';

@@ -68,6 +68,8 @@ abstract class JsonCollector extends Collector
 			return false;
 		}
 
+
+
 		//**** step 1 : get all parameters from config file
 		$aParamsSourceJson = $this->aCollectorConfig;
 		if (isset($aParamsSourceJson["command"])) {
