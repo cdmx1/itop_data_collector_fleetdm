@@ -1,6 +1,6 @@
 {
    "require": {
-       "php": "7.*",
+       "php": "8.*",
        "ext-libxml": "*"
    },
    "require-dev": {

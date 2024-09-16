@@ -1,5 +1,5 @@
 <?php
-require_once(APPROOT.'collectors/fleetdmhostcollector.class.inc.php');
-$oFLTCollector = new fleetdmhostcollector();
+require_once(APPROOT. 'collectors/FleetdmHostCollector.class.inc.php');
+$oFLTCollector = new FleetdmHostCollector();
 $oFLTCollector->Run();
-Orchestrator::AddCollector(1, 'fleetdmhostcollector');
+// Orchestrator::AddCollector(1, 'FleetdmHostCollector');
