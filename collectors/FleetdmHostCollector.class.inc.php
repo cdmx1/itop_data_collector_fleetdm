@@ -2,6 +2,8 @@
 
 // Ensure the base JsonCollector class is included
 require_once(APPROOT . '/core/collector.class.inc.php');
+require_once(APPROOT . '/StatusEnum.php');
+require_once(APPROOT . '/BrandsEnum.php');
 
 class FleetdmHostCollector extends JsonCollector
 {
