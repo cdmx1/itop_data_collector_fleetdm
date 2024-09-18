@@ -31,11 +31,21 @@ class FleetdmHostCollector extends JsonCollector
 
         foreach ($labels as $label) {
             $sync_data = $this->getSyncData($label['fleet_dm_id']);
-            var_dump("Sync Data", $sync_data);
 
             foreach ($sync_data as $host) {
-                $this->SendToItop($label['name'], ["name"=>"Name", "org_id"=>1]);
-                var_dump("host");
+                $json_template = file_get_contents(__DIR__ ."/json_source/{$label['itop_json_source']}");
+                $data = $this->updateJsonTemplate($json_template, $label['api_params'], $host, $label['default_values']);
+                Utils::Log(LOG_INFO, "Syncing data for : {$label['name']}");
+                Utils::Log(LOG_INFO, print_r($data, true));
+
+                try {
+                    $this->PrepareForSync($data);
+                    $this->SendToItop($label['name'], $data);
+
+                    Utils::Log(LOG_INFO, "Successfully synchronized data for " . $label['name']);
+                } catch (Exception $e) {
+                    Utils::Log(LOG_ERR, "Error while processing " . $label['name'] . " - " . $e->getMessage());
+                }
             }
         }
 
@@ -64,8 +74,9 @@ class FleetdmHostCollector extends JsonCollector
         Utils::Log(LOG_INFO, print_r($data, true));
 
         if (!isset($data['status'])) {
-            $data['status'] = 'active';
+            $data['status'] = 'production';
         }
+        $data['org_id'] = Utils::GetConfigurationValue('org_id', '');
     }
 
     private function SendToItop(string $label_name, array $data): void
@@ -151,7 +162,7 @@ class FleetdmHostCollector extends JsonCollector
         // If the data is an array, recursively process it
         if (is_array($data)) {
             foreach ($data as $key => $value) {
-                $data[$key] = replacePlaceholders($value, $placeholders);
+                $data[$key] = $this->replacePlaceholders($value, $placeholders);
             }
         }
         // If the data is a string, replace placeholders
@@ -187,25 +198,23 @@ class FleetdmHostCollector extends JsonCollector
      *
      * @param string $jsonTemplate The JSON template with placeholders
      * @param array $mappingArray The mapping array linking template keys to API keys
-     * @param string $apiUrl The URL to fetch the API data
+     * @param string $apiData API data
      * @param array $defaultValues The default values to use when API data is missing
-     * @return string The updated JSON string
+     * @return array The updated JSON string
      */
-    private function updateJsonTemplate($jsonTemplate, $mappingArray, $apiUrl, $defaultValues)
+    private function updateJsonTemplate($jsonTemplate, $mappingArray, $apiData, $defaultValues)
     {
-        // Fetch data from the API
-        $apiData = $this->fetchDataWithBearerToken($apiUrl);
-
         // Build placeholders array with default values
         $placeholders = $this->buildPlaceholdersArray($mappingArray, $apiData, $defaultValues);
 
+        var_dump("Placeholders", $placeholders);
         // Decode the JSON template into an associative array
         $data = json_decode($jsonTemplate, true);
 
         // Replace the placeholders in the JSON structure
-        $updatedData = replacePlaceholders($data, $placeholders);
+        $updatedData = $this->replacePlaceholders($data, $placeholders);
 
         // Encode back to JSON and return
-        return json_encode($updatedData, JSON_PRETTY_PRINT);
+        return $updatedData;
     }
 }
