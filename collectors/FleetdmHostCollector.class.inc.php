@@ -29,7 +29,6 @@ class FleetdmHostCollector extends JsonCollector
         Utils::Log(LOG_INFO, "Run method called.");
 
         $labels = Utils::GetConfigurationValue('labels', '');
-        var_dump("Labels", $labels);
 
         foreach ($labels as $label) {
             $sync_data = $this->getSyncData($label['fleet_dm_id']);
@@ -75,10 +74,37 @@ class FleetdmHostCollector extends JsonCollector
         Utils::Log(LOG_INFO, "Preparing data for sync: ");
         Utils::Log(LOG_INFO, print_r($data, true));
 
+        $statuses = StatusEnum::cases();
+        $statuses =
+        array_combine(
+            array_map(fn($case) => $case->name, $statuses),  // Keys: Enum names
+            array_map(fn($case) => $case->value, $statuses)  // Values: Enum values
+        );
+
+
         if (!isset($data['status'])) {
             $data['status'] = 'production';
+        } else {
+            $data['status'] =
+            isset($statuses[$data['status']]) ? $statuses[$data['status']] : $statuses['online'];
+
+        }
+
+        $brands = BrandsEnum::cases();
+        $brands =
+        array_combine(
+            array_map(fn($case) => $case->name, $brands),  // Keys: Enum names
+            array_map(fn($case) => $case->value, $brands)  // Values: Enum values
+        );
+
+        var_dump("Brands", $brands);
+        var_dump("data", $data);
+        if (!isset($data['brand_id']) && isset($data['brand'])) {
+            $data['brand_id'] = isset($brands[$data['brand']]) ? $brands[$data['brand']] : $brands['other'];
+            unset($data['brand']);
         }
         $data['org_id'] = Utils::GetConfigurationValue('org_id', '');
+        var_dump("data", $data);
     }
 
     private function SendToItop(string $label_name, array $data): void
@@ -113,7 +139,8 @@ class FleetdmHostCollector extends JsonCollector
     // Define a method to fetch sync data if needed
     private function getSyncData($label_id): array
     {
-        $jsonUrl = Utils::GetConfigurationValue('jsonurl', '');
+        $jsonUrl = Utils::GetConfigurationValue('jsonurl', ''); // Print "Try programiz.pro" message
+        echo "Try programiz.pro";
         $data = json_decode($this->fetchDataWithBearerToken("{$jsonUrl}/api/v1/fleet/labels/{$label_id}/hosts"), true);
         return $data[Utils::GetConfigurationValue('path', 'hosts')];
     }
@@ -122,7 +149,6 @@ class FleetdmHostCollector extends JsonCollector
     {
         // Define your Bearer token inside the function
         $bearerToken = Utils::GetConfigurationValue('jsonpost', '')['api_token'];
-        var_dump("token", $bearerToken);
 
         // Initialize cURL
         $ch = curl_init($url);
@@ -209,7 +235,6 @@ class FleetdmHostCollector extends JsonCollector
         // Build placeholders array with default values
         $placeholders = $this->buildPlaceholdersArray($mappingArray, $apiData, $defaultValues);
 
-        var_dump("Placeholders", $placeholders);
         // Decode the JSON template into an associative array
         $data = json_decode($jsonTemplate, true);
 

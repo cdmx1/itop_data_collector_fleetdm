@@ -1,7 +1,5 @@
 <?php
-enum Gender: string
+enum StatusEnum: string
 {
-    case MALE  = 'Male';
-    case FEMALE = 'Female';
-    case OTHER = 'Other';
+    case online  = 'production';
 }
