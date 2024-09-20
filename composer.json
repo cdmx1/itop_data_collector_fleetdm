@@ -5,5 +5,13 @@
    },
    "require-dev": {
      "phpunit/phpunit": "^9"
-   }
+   },
+   "autoload": {
+    "psr-4": {
+      "": "collectors/"
+    }
+  },
+  "name": "itop-collector-fleetdm",
+  "type": "itop-extension",
+  "description": "Itop collector Fleet dm"
 }

@@ -2,5 +2,6 @@
          "name": "$computer_name$",
         "business_criticity": "high",
         "type":"desktop",
-        "cpu" : "$cpu_type$"
+        "cpu" : "$cpu_type$",
+        "brand" : "$brand$"
 }

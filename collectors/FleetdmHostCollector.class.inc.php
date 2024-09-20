@@ -7,10 +7,20 @@ require_once(APPROOT . '/BrandsEnum.php');
 
 class FleetdmHostCollector extends JsonCollector
 {
+
+    protected $oOSVersionLookup;
+    protected $oOSLicenceLookup;
+    protected $oModelLookup;
+
     public function __construct()
     {
         parent::__construct();
         Utils::Log(LOG_INFO, "FleetDMHostCollector constructor called.");
+        // Retrieve the identifiers of the Model since we must do a lookup based on two fields: Brand + Model
+        // which is not supported by the iTop Data Synchro... so let's do the job of an ETL
+        $this->oOSVersionLookup = new LookupTable('SELECT OSVersion', array('osfamily_id_friendlyname', 'name'));
+        $this->oOSLicenceLookup = new LookupTable('SELECT OSLicence', array('osversion_id', 'name'));
+        $this->oModelLookup = new LookupTable('SELECT Model', array('brand_id_friendlyname', 'name'), false /* non-case sensitive */);
     }
 
     /**
@@ -30,14 +40,21 @@ class FleetdmHostCollector extends JsonCollector
 
         $labels = Utils::GetConfigurationValue('labels', '');
 
+
         foreach ($labels as $label) {
             $sync_data = $this->getSyncData($label['fleet_dm_id']);
+
 
             foreach ($sync_data as $host) {
                 $json_template = file_get_contents(__DIR__ ."/json_source/{$label['itop_json_source']}");
                 $data = $this->updateJsonTemplate($json_template, $label['api_params'], $host, $label['default_values']);
                 Utils::Log(LOG_INFO, "Syncing data for : {$label['name']}");
                 Utils::Log(LOG_INFO, print_r($data, true));
+
+                // // Process each line of the CSV
+                // $this->oOSVersionLookup->Lookup($aLineData, array('osfamily_id', 'osversion_id'), 'osversion_id', $iLineIndex);
+                // $this->oOSLicenceLookup->Lookup($aLineData, array('osversion_id', 'oslicence_id'), 'oslicence_id', $iLineIndex, true);
+                // $this->oModelLookup->Lookup($aLineData, array('brand_id', 'model_id'), 'model_id', $iLineIndex);
 
                 try {
                     $this->PrepareForSync($data);
@@ -100,7 +117,7 @@ class FleetdmHostCollector extends JsonCollector
         var_dump("Brands", $brands);
         var_dump("data", $data);
         if (!isset($data['brand_id']) && isset($data['brand'])) {
-            $data['brand_id'] = isset($brands[$data['brand']]) ? $brands[$data['brand']] : $brands['other'];
+            $data['brand_id'] = isset($brands[$data['brand']]) ? $brands[$data['brand']] : $brands['Other'];
             unset($data['brand']);
         }
         $data['org_id'] = Utils::GetConfigurationValue('org_id', '');
@@ -139,8 +156,7 @@ class FleetdmHostCollector extends JsonCollector
     // Define a method to fetch sync data if needed
     private function getSyncData($label_id): array
     {
-        $jsonUrl = Utils::GetConfigurationValue('jsonurl', ''); // Print "Try programiz.pro" message
-        echo "Try programiz.pro";
+        $jsonUrl = Utils::GetConfigurationValue('jsonurl', '');
         $data = json_decode($this->fetchDataWithBearerToken("{$jsonUrl}/api/v1/fleet/labels/{$label_id}/hosts"), true);
         return $data[Utils::GetConfigurationValue('path', 'hosts')];
     }
