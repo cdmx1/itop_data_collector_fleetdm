@@ -44,8 +44,10 @@ class FleetdmHostCollector extends JsonCollector
         foreach ($labels as $label) {
             $sync_data = $this->getSyncData($label['fleet_dm_id']);
 
+            $hostLookUp = new LookupTable('SELECT ' . $label['name'], [$label['unique_identifier']], true /* non-case sensitive */);
 
-            foreach ($sync_data as $host) {
+
+            foreach ($sync_data as $key => $host) {
                 $json_template = file_get_contents(__DIR__ ."/json_source/{$label['itop_json_source']}");
                 $data = $this->updateJsonTemplate($json_template, $label['api_params'], $host, $label['default_values']);
                 Utils::Log(LOG_INFO, "Syncing data for : {$label['name']}");
@@ -58,6 +60,11 @@ class FleetdmHostCollector extends JsonCollector
 
                 try {
                     $this->PrepareForSync($data);
+
+
+                    $testD = $data;
+
+                    var_dump("lookup", $hostLookUp->Lookup($testD, [$label['unique_identifier']], "name", $key));
                     $this->SendToItop($label['name'], $data);
 
                     Utils::Log(LOG_INFO, "Successfully synchronized data for " . $label['name']);
@@ -114,14 +121,14 @@ class FleetdmHostCollector extends JsonCollector
             array_map(fn($case) => $case->value, $brands)  // Values: Enum values
         );
 
-        var_dump("Brands", $brands);
-        var_dump("data", $data);
+        // var_dump("Brands", $brands);
+        // var_dump("data", $data);
         if (!isset($data['brand_id']) && isset($data['brand'])) {
             $data['brand_id'] = isset($brands[$data['brand']]) ? $brands[$data['brand']] : $brands['Other'];
             unset($data['brand']);
         }
         $data['org_id'] = Utils::GetConfigurationValue('org_id', '');
-        var_dump("data", $data);
+        // var_dump("data", $data);
     }
 
     private function SendToItop(string $label_name, array $data): void
