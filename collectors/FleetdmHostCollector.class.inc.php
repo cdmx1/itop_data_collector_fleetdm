@@ -44,7 +44,13 @@ class FleetdmHostCollector extends JsonCollector
         foreach ($labels as $label) {
             $sync_data = $this->getSyncData($label['fleet_dm_id']);
 
-            $hostLookUp = new LookupTable('SELECT ' . $label['name'], [$label['unique_identifier']], true /* non-case sensitive */);
+            // $hostLookUp = new LookupTable('SELECT ' . $label['name'], [$label['unique_identifier']], true /* non-case sensitive */);
+
+            $oRestClient = new RestClient();
+
+            $aRes = $oRestClient->Get("PC", "SELECT PC", implode(',', ["name"]));
+
+            var_dump("Rest DATA", $aRes);
 
 
             foreach ($sync_data as $key => $host) {
@@ -53,18 +59,10 @@ class FleetdmHostCollector extends JsonCollector
                 Utils::Log(LOG_INFO, "Syncing data for : {$label['name']}");
                 Utils::Log(LOG_INFO, print_r($data, true));
 
-                // // Process each line of the CSV
-                // $this->oOSVersionLookup->Lookup($aLineData, array('osfamily_id', 'osversion_id'), 'osversion_id', $iLineIndex);
-                // $this->oOSLicenceLookup->Lookup($aLineData, array('osversion_id', 'oslicence_id'), 'oslicence_id', $iLineIndex, true);
-                // $this->oModelLookup->Lookup($aLineData, array('brand_id', 'model_id'), 'model_id', $iLineIndex);
 
                 try {
                     $this->PrepareForSync($data);
 
-
-                    $testD = $data;
-
-                    var_dump("lookup", $hostLookUp->Lookup($testD, [$label['unique_identifier']], "name", $key));
                     $this->SendToItop($label['name'], $data);
 
                     Utils::Log(LOG_INFO, "Successfully synchronized data for " . $label['name']);
@@ -266,5 +264,52 @@ class FleetdmHostCollector extends JsonCollector
 
         // Encode back to JSON and return
         return $updatedData;
+    }
+
+    private function getAllHostsFromItop (){
+        if ($aRes['code'] == 0) {
+            foreach ((array)$aRes['objects'] as $sObjKey => $aObj) {
+                $iObjKey = 0;
+                $aMappingKeys = array();
+                foreach ($aKeyFields as $sField) {
+                    if (!array_key_exists($sField, $aObj['fields'])) {
+                        Utils::Log(LOG_ERR, "field '$sField' does not exist in '" . json_encode($aObj['fields']) . "'");
+                        $aMappingKeys[] = '';
+                    } else {
+                        $aMappingKeys[] = $aObj['fields'][$sField];
+                    }
+                }
+                $sMappingKey = implode('_', $aMappingKeys);
+                if (!$this->bCaseSensitive) {
+                    if (function_exists('mb_strtolower')) {
+                        $sMappingKey = mb_strtolower($sMappingKey);
+                    } else {
+                        $sMappingKey = strtolower($sMappingKey);
+                    }
+                }
+                if ($this->sReturnAttCode !== 'id') {
+                    // If the return attcode is not the ID of the object, check that it exists
+                    if (!array_key_exists($this->sReturnAttCode, $aObj['fields'])) {
+                        Utils::Log(LOG_ERR, "field '{$this->sReturnAttCode}' does not exist in '" . json_encode($aObj['fields']) . "'");
+                        $iObjKey = 0;
+                    } else {
+                        $iObjKey = $aObj['fields'][$this->sReturnAttCode];
+                    }
+                } else {
+                    // The return value is the ID of the object
+                    if (!array_key_exists('key', $aObj)) {
+                        // Emulate the behavior for older versions of the REST API
+                        if (preg_match('/::([0-9]+)$/', $sObjKey, $aMatches)) {
+                            $iObjKey = (int)$aMatches[1];
+                        }
+                    } else {
+                        $iObjKey = (int)$aObj['key'];
+                    }
+                }
+                $this->aData[$sMappingKey] = $iObjKey; // Store the mapping
+            }
+        } else {
+            Utils::Log(LOG_ERR, "Unable to retrieve the $sClass objects (query = $sOQL). Message: " . $aRes['message']);
+        }
     }
 }

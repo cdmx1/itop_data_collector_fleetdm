@@ -1,7 +1,7 @@
 <?php
 // Copyright (C) 2014-2018 Combodo SARL
 //
-//   This application is free software; you can redistribute it and/or modify	
+//   This application is free software; you can redistribute it and/or modify
 //   it under the terms of the GNU Affero General Public License as published by
 //   the Free Software Foundation, either version 3 of the License, or
 //   (at your option) any later version.
@@ -136,6 +136,7 @@ class LookupTable
 				return false;
 			}
 			$aLookupKey = array();
+			// var_dump($this->aFieldsPos, $aLookupFields);
 			foreach ($aLookupFields as $sField) {
 				$iPos = $this->aFieldsPos[$sField];
 				if ($iPos !== null) {
@@ -181,11 +182,14 @@ class LookupTable
 	 */
 	protected function InitLineMappings($aLineHeaders, $aFields)
 	{
+
 		foreach ($aLineHeaders as $idx => $sHeader) {
 			if (in_array($sHeader, $aFields)) {
 				$this->aFieldsPos[$sHeader] = $idx;
 			}
 		}
+
+		var_dump("Test", $aLineHeaders, $aFields, $this->aFieldsPos);
 
 		// Check that all requested fields were found in the headers
 		foreach ($aFields as $sField) {
