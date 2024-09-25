@@ -8,19 +8,10 @@ require_once(APPROOT . '/BrandsEnum.php');
 class FleetdmHostCollector extends JsonCollector
 {
 
-    protected $oOSVersionLookup;
-    protected $oOSLicenceLookup;
-    protected $oModelLookup;
-
     public function __construct()
     {
         parent::__construct();
         Utils::Log(LOG_INFO, "FleetDMHostCollector constructor called.");
-        // Retrieve the identifiers of the Model since we must do a lookup based on two fields: Brand + Model
-        // which is not supported by the iTop Data Synchro... so let's do the job of an ETL
-        $this->oOSVersionLookup = new LookupTable('SELECT OSVersion', array('osfamily_id_friendlyname', 'name'));
-        $this->oOSLicenceLookup = new LookupTable('SELECT OSLicence', array('osversion_id', 'name'));
-        $this->oModelLookup = new LookupTable('SELECT Model', array('brand_id_friendlyname', 'name'), false /* non-case sensitive */);
     }
 
     /**
@@ -43,15 +34,9 @@ class FleetdmHostCollector extends JsonCollector
 
         foreach ($labels as $label) {
             $sync_data = $this->getSyncData($label['fleet_dm_id']);
+            $unique_identifier =  $label['unique_identifier'];
 
-            // $hostLookUp = new LookupTable('SELECT ' . $label['name'], [$label['unique_identifier']], true /* non-case sensitive */);
-
-            $oRestClient = new RestClient();
-
-            $aRes = $oRestClient->Get("PC", "SELECT PC", implode(',', ["name"]));
-
-            var_dump("Rest DATA", $aRes);
-
+            $oldData = $this->getAllHostsFromItop($label['name'], "id", $unique_identifier);
 
             foreach ($sync_data as $key => $host) {
                 $json_template = file_get_contents(__DIR__ ."/json_source/{$label['itop_json_source']}");
@@ -62,8 +47,12 @@ class FleetdmHostCollector extends JsonCollector
 
                 try {
                     $this->PrepareForSync($data);
-
-                    $this->SendToItop($label['name'], $data);
+                    $isAlreadyAdded = array_search($data[$unique_identifier], $oldData);
+                    if ($isAlreadyAdded) {
+                        $this->SendToItop($label['name'], $data, "update", $isAlreadyAdded);
+                    } else{
+                        $this->SendToItop($label['name'], $data);
+                    }
 
                     Utils::Log(LOG_INFO, "Successfully synchronized data for " . $label['name']);
                 } catch (Exception $e) {
@@ -129,7 +118,7 @@ class FleetdmHostCollector extends JsonCollector
         // var_dump("data", $data);
     }
 
-    private function SendToItop(string $label_name, array $data): void
+    private function SendToItop(string $label_name, array $data, $type = "create", $keySpec = ""): void
     {
         Utils::Log(LOG_DEBUG, "Sending data to iTop: ");
         Utils::Log(LOG_DEBUG, print_r($data, true));
@@ -147,7 +136,11 @@ class FleetdmHostCollector extends JsonCollector
             throw new Exception($errorMsg);
         }
 
-        $response = $oRestClient->Create($label_name, $data, '');
+        if ($type === "create") {
+            $response = $oRestClient->Create($label_name, $data, '');
+        } else {
+            $response = $oRestClient->Update($label_name, $keySpec, $data, '');
+        }
 
         if (!$response['code'] == 0) {
             $errorMsg = 'Failed to sync host with iTop: ' . $response['message'];
@@ -266,50 +259,19 @@ class FleetdmHostCollector extends JsonCollector
         return $updatedData;
     }
 
-    private function getAllHostsFromItop (){
+
+    private function getAllHostsFromItop ($sClass, $primary_key, $unique_identifier){
+        $oRestClient = new RestClient();
+
+        $aRes = $oRestClient->Get($sClass, "SELECT {$sClass}", implode(',', [$primary_key, $unique_identifier]));
+
+
         if ($aRes['code'] == 0) {
-            foreach ((array)$aRes['objects'] as $sObjKey => $aObj) {
-                $iObjKey = 0;
-                $aMappingKeys = array();
-                foreach ($aKeyFields as $sField) {
-                    if (!array_key_exists($sField, $aObj['fields'])) {
-                        Utils::Log(LOG_ERR, "field '$sField' does not exist in '" . json_encode($aObj['fields']) . "'");
-                        $aMappingKeys[] = '';
-                    } else {
-                        $aMappingKeys[] = $aObj['fields'][$sField];
-                    }
-                }
-                $sMappingKey = implode('_', $aMappingKeys);
-                if (!$this->bCaseSensitive) {
-                    if (function_exists('mb_strtolower')) {
-                        $sMappingKey = mb_strtolower($sMappingKey);
-                    } else {
-                        $sMappingKey = strtolower($sMappingKey);
-                    }
-                }
-                if ($this->sReturnAttCode !== 'id') {
-                    // If the return attcode is not the ID of the object, check that it exists
-                    if (!array_key_exists($this->sReturnAttCode, $aObj['fields'])) {
-                        Utils::Log(LOG_ERR, "field '{$this->sReturnAttCode}' does not exist in '" . json_encode($aObj['fields']) . "'");
-                        $iObjKey = 0;
-                    } else {
-                        $iObjKey = $aObj['fields'][$this->sReturnAttCode];
-                    }
-                } else {
-                    // The return value is the ID of the object
-                    if (!array_key_exists('key', $aObj)) {
-                        // Emulate the behavior for older versions of the REST API
-                        if (preg_match('/::([0-9]+)$/', $sObjKey, $aMatches)) {
-                            $iObjKey = (int)$aMatches[1];
-                        }
-                    } else {
-                        $iObjKey = (int)$aObj['key'];
-                    }
-                }
-                $this->aData[$sMappingKey] = $iObjKey; // Store the mapping
-            }
+           return array_column(array_column(array_values($aRes['objects'] ?? []), "fields"), $unique_identifier, $primary_key);
         } else {
-            Utils::Log(LOG_ERR, "Unable to retrieve the $sClass objects (query = $sOQL). Message: " . $aRes['message']);
+            var_dump("Ares", array_column(array_column(array_values($aRes['objects']), "fields"), $unique_identifier, $primary_key));
         }
+
+        return false;
     }
 }
