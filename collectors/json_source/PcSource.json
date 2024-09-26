@@ -1,7 +1,9 @@
 {
-         "name": "$computer_name$",
+        "name": "$computer_name$",
         "business_criticity": "high",
         "type":"desktop",
         "cpu" : "$cpu_type$",
-        "brand" : "$brand$"
+        "brand" : "$brand$",
+        "ram" : "$ram$",
+        "serialnumber" : "$serialnumber$"
 }
