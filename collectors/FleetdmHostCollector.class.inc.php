@@ -7,10 +7,44 @@ require_once(APPROOT . '/BrandsEnum.php');
 
 class FleetdmHostCollector extends JsonCollector
 {
+    private $oRestClient;
+    private $brands;
+    private $OSFamily;
 
     public function __construct()
     {
         parent::__construct();
+        $itopUrl = Utils::GetConfigurationValue('itop_url', '');
+        $itopLogin = Utils::GetConfigurationValue('itop_login', '');
+        $itopPassword = Utils::GetConfigurationValue('itop_password', '');
+
+        $this->oRestClient = new RestClient();
+        $result = $this->oRestClient->CheckCredentials($itopLogin, $itopPassword);
+
+        if ($result['code'] != 0) {
+            $errorMsg = 'Failed to authenticate with iTop: ' . $result['message'];
+            Utils::Log(LOG_ERR, $errorMsg);
+            throw new Exception($errorMsg);
+        }
+
+        $brands = $this->oRestClient->Get("Brand", "SELECT Brand", "id, friendlyname");
+        if ($brands['code'] != 0) {
+            $errorMsg = 'Failed to authenticate with iTop: ' . $brands['message'];
+            Utils::Log(LOG_ERR, $errorMsg);
+            throw new Exception($errorMsg);
+        } else {
+            $this->brands = array_column(array_values($brands['objects'] ?? []), "fields");
+        }
+
+        $OSFamily = $this->oRestClient->Get("OSFamily", "SELECT OSFamily", "id, friendlyname");
+        if ($OSFamily['code'] != 0) {
+            $errorMsg = 'Failed to authenticate with iTop: ' . $OSFamily['message'];
+            Utils::Log(LOG_ERR, $errorMsg);
+            throw new Exception($errorMsg);
+        } else {
+            $this->OSFamily = array_column(array_values($brands['objects'] ?? []), "fields");
+        }
+
         Utils::Log(LOG_INFO, "FleetDMHostCollector constructor called.");
     }
 
@@ -61,22 +95,6 @@ class FleetdmHostCollector extends JsonCollector
             }
         }
 
-        // Fetching sync data from a different source or configuration
-
-        // foreach ($syncData as $data) {
-        //     Utils::Log(LOG_INFO, "Syncing data: ");
-        //     Utils::Log(LOG_INFO, print_r($data, true));
-
-        //     try {
-        //         $this->PrepareForSync($data);
-        //         $this->SendToItop($data);
-
-        //         Utils::Log(LOG_INFO, "Successfully synchronized data for " . $data['name']);
-        //     } catch (Exception $e) {
-        //         Utils::Log(LOG_ERR, "Error while processing " . $data['name'] . " - " . $e->getMessage());
-        //     }
-        // }
-
         Utils::Log(LOG_INFO, "Data synchronization finished");
     }
 
@@ -98,24 +116,34 @@ class FleetdmHostCollector extends JsonCollector
         } else {
             $data['status'] =
             isset($statuses[$data['status']]) ? $statuses[$data['status']] : $statuses['online'];
-
         }
 
-        $brands = BrandsEnum::cases();
-        $brands =
-        array_combine(
-            array_map(fn($case) => $case->name, $brands),  // Keys: Enum names
-            array_map(fn($case) => $case->value, $brands)  // Values: Enum values
-        );
+        $brands = $this->brands;
 
-        // var_dump("Brands", $brands);
-        // var_dump("data", $data);
         if (!isset($data['brand_id']) && isset($data['brand'])) {
-            $data['brand_id'] = isset($brands[$data['brand']]) ? $brands[$data['brand']] : $brands['Other'];
+            $fleetDmBrand = strtolower($data['brand']);
+            $filteredArray = array_filter($brands, function ($value) use ($fleetDmBrand) {
+                return strtolower($value['friendlyname']) === $fleetDmBrand; // Filter condition using external variable
+            });
+
+            if (count($filteredArray) > 0) {
+                $data['brand_id'] = array_values($filteredArray)[0]["id"];
+            }
             unset($data['brand']);
         }
+
+        if (!isset($data['os_family'])) {
+            $fleetDmOSFamily = strtolower($data['os_family']);
+            $filteredArray = array_filter($brands, function ($value) use ($fleetDmOSFamily) {
+                return strtolower($value['friendlyname']) === $fleetDmOSFamily; // Filter condition using external variable
+            });
+
+            if (count($filteredArray) > 0) {
+                $data['os_family'] = array_values($filteredArray)[0]["id"];
+            }
+            // unset($data['brand']);
+        }
         $data['org_id'] = Utils::GetConfigurationValue('org_id', '');
-        // var_dump("data", $data);
     }
 
     private function SendToItop(string $label_name, array $data, $type = "create", $keySpec = ""): void
@@ -123,23 +151,10 @@ class FleetdmHostCollector extends JsonCollector
         Utils::Log(LOG_DEBUG, "Sending data to iTop: ");
         Utils::Log(LOG_DEBUG, print_r($data, true));
 
-        $itopUrl = Utils::GetConfigurationValue('itop_url', '');
-        $itopLogin = Utils::GetConfigurationValue('itop_login', '');
-        $itopPassword = Utils::GetConfigurationValue('itop_password', '');
-
-        $oRestClient = new RestClient();
-        $result = $oRestClient->CheckCredentials($itopLogin, $itopPassword);
-
-        if ($result['code'] != 0) {
-            $errorMsg = 'Failed to authenticate with iTop: ' . $result['message'];
-            Utils::Log(LOG_ERR, $errorMsg);
-            throw new Exception($errorMsg);
-        }
-
         if ($type === "create") {
-            $response = $oRestClient->Create($label_name, $data, '');
+            $response = $this->oRestClient->Create($label_name, $data, '');
         } else {
-            $response = $oRestClient->Update($label_name, $keySpec, $data, '');
+            $response = $this->oRestClient->Update($label_name, $keySpec, $data, '');
         }
 
         if (!$response['code'] == 0) {
@@ -261,9 +276,8 @@ class FleetdmHostCollector extends JsonCollector
 
 
     private function getAllHostsFromItop ($sClass, $primary_key, $unique_identifier){
-        $oRestClient = new RestClient();
 
-        $aRes = $oRestClient->Get($sClass, "SELECT {$sClass}", implode(',', [$primary_key, $unique_identifier]));
+        $aRes = $this->oRestClient->Get($sClass, "SELECT {$sClass}", implode(',', [$primary_key, $unique_identifier]));
 
 
         if ($aRes['code'] == 0) {
