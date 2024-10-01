@@ -119,6 +119,7 @@ class FleetdmHostCollector extends JsonCollector
         }
 
         $brands = $this->brands;
+        // $OSFamily = $this->OSFamily;
 
         if (!isset($data['brand_id']) && isset($data['brand'])) {
             $fleetDmBrand = strtolower($data['brand']);
@@ -132,17 +133,19 @@ class FleetdmHostCollector extends JsonCollector
             unset($data['brand']);
         }
 
-        if (!isset($data['os_family'])) {
-            $fleetDmOSFamily = strtolower($data['os_family']);
-            $filteredArray = array_filter($brands, function ($value) use ($fleetDmOSFamily) {
-                return strtolower($value['friendlyname']) === $fleetDmOSFamily; // Filter condition using external variable
-            });
+        // if (!isset($data['osfamily_id'])) {
+        //     $fleetDmOSFamily = strtolower($data['osfamily_id']);
+        //     $filteredOSFamilyArray = array_filter($OSFamily, function ($value) use ($fleetDmOSFamily) {
+        //         return strtolower($value['friendlyname']) === $fleetDmOSFamily; // Filter condition using external variable
+        //     });
 
-            if (count($filteredArray) > 0) {
-                $data['os_family'] = array_values($filteredArray)[0]["id"];
-            }
-            // unset($data['brand']);
-        }
+        //     var_dump("OS_family", $filteredOSFamilyArray);
+
+        //     if (count($filteredOSFamilyArray) > 0) {
+        //         $data['osfamily_id'] = array_values($filteredOSFamilyArray)[0]["id"];
+        //     }
+        //     // unset($data['osfamily_id']);
+        // }
         $data['org_id'] = Utils::GetConfigurationValue('org_id', '');
     }
 

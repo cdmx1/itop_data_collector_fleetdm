@@ -5,6 +5,5 @@
         "cpu" : "$cpu_type$",
         "brand" : "$brand$",
         "ram" : "$ram$",
-        "serialnumber" : "$serialnumber$",
-        "os_family" : "$platform$"
+        "serialnumber" : "$serialnumber$"
 }
