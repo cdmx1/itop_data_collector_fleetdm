@@ -11,7 +11,7 @@
       "": "collectors/"
     }
   },
-  "name": "itop-collector-fleetdm",
+  "name": "cdmx/itop-collector-fleetdm",
   "type": "itop-extension",
   "description": "Itop collector Fleet dm"
 }

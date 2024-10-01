@@ -143,8 +143,7 @@ class FleetdmHostCollector extends JsonCollector
             if (count($filteredOSFamilyArray) > 0) {
                 $data['osfamily_id'] = array_values($filteredOSFamilyArray)[0]["id"];
             }
-            // var_dump("OS_family", $filteredOSFamilyArray, $fleetDmOSFamily, $data['osfamily_id']);
-            unset($data['osfamily']);
+            // var_dump("OS_family", $filteredOSFamilyArray, $fleetDmOSFamily, $data['osfamily_id']);\
         }
         $data['org_id'] = Utils::GetConfigurationValue('org_id', '');
     }

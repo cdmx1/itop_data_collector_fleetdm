@@ -30,7 +30,9 @@ SetupWebPage::AddModule(
         'visible' => true,
         // Components
         //
-        'datamodel' => array(),
+        'datamodel' => array(
+            "collectors/main.php"
+        ),
         'webservice' => array(),
         'data.struct' => array(
             // add your 'structure' definition XML files here,

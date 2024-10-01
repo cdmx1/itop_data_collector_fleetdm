@@ -102,7 +102,7 @@ $jsonTemplate = '{
     "status": "$synchro_status$",
     "user_id": "$synchro_user$",
     "notify_contact_id": "$contact_to_notify$",
-    "scope_class": "OCSAssetCategory",
+    "scope_class": "FleetDMAssetCategory",
     "database_table_name":  "synchro_data_assetcategory_$prefix$$suffix$",
     "scope_restriction": "",
     "full_load_periodicity": "$full_load_interval$",
