@@ -1,9 +1,10 @@
 {
         "name": "$computer_name$",
         "business_criticity": "high",
-        "type":"desktop",
+        "type": "$type$",
         "cpu" : "$cpu_type$",
         "brand" : "$brand$",
         "ram" : "$ram$",
-        "serialnumber" : "$serialnumber$"
+        "serialnumber" : "$serialnumber$",
+        "osfamily" : "$platform$"
 }

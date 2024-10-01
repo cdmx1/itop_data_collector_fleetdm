@@ -42,7 +42,7 @@ class FleetdmHostCollector extends JsonCollector
             Utils::Log(LOG_ERR, $errorMsg);
             throw new Exception($errorMsg);
         } else {
-            $this->OSFamily = array_column(array_values($brands['objects'] ?? []), "fields");
+            $this->OSFamily = array_column(array_values($OSFamily['objects'] ?? []), "fields");
         }
 
         Utils::Log(LOG_INFO, "FleetDMHostCollector constructor called.");
@@ -119,7 +119,7 @@ class FleetdmHostCollector extends JsonCollector
         }
 
         $brands = $this->brands;
-        // $OSFamily = $this->OSFamily;
+        $OSFamily = $this->OSFamily;
 
         if (!isset($data['brand_id']) && isset($data['brand'])) {
             $fleetDmBrand = strtolower($data['brand']);
@@ -133,19 +133,19 @@ class FleetdmHostCollector extends JsonCollector
             unset($data['brand']);
         }
 
-        // if (!isset($data['osfamily_id'])) {
-        //     $fleetDmOSFamily = strtolower($data['osfamily_id']);
-        //     $filteredOSFamilyArray = array_filter($OSFamily, function ($value) use ($fleetDmOSFamily) {
-        //         return strtolower($value['friendlyname']) === $fleetDmOSFamily; // Filter condition using external variable
-        //     });
+        if (!isset($data['osfamily_id']) && isset($data['osfamily'])) {
+            $fleetDmOSFamily = strtolower($data['osfamily']);
+            $filteredOSFamilyArray = array_filter($OSFamily, function ($value) use ($fleetDmOSFamily) {
+                return strtolower($value['friendlyname']) === $fleetDmOSFamily; // Filter condition using external variable
+            });
 
-        //     var_dump("OS_family", $filteredOSFamilyArray);
 
-        //     if (count($filteredOSFamilyArray) > 0) {
-        //         $data['osfamily_id'] = array_values($filteredOSFamilyArray)[0]["id"];
-        //     }
-        //     // unset($data['osfamily_id']);
-        // }
+            if (count($filteredOSFamilyArray) > 0) {
+                $data['osfamily_id'] = array_values($filteredOSFamilyArray)[0]["id"];
+            }
+            // var_dump("OS_family", $filteredOSFamilyArray, $fleetDmOSFamily, $data['osfamily_id']);
+            unset($data['osfamily']);
+        }
         $data['org_id'] = Utils::GetConfigurationValue('org_id', '');
     }
 
