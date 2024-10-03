@@ -176,7 +176,7 @@ class FleetdmHostCollector extends JsonCollector
         return $data[Utils::GetConfigurationValue('path', 'hosts')];
     }
 
-    private function fetchDataWithBearerToken($url)
+    private function fetchDataWithBearerToken($url, $bearerToken)
     {
         // Define your Bearer token inside the function
         $bearerToken = Utils::GetConfigurationValue('jsonpost', '')['api_token'];

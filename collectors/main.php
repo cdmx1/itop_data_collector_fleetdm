@@ -1,7 +1,11 @@
 <?php
-require_once(APPROOT. 'collectors/FleetdmHostCollector.class.inc.php');
 include(APPROOT . '/collectors/vendor/autoload.php');
+// require_once(APPROOT. 'collectors/FleetdmHostCollector.class.inc.php');
 
-$oFLTCollector = new FleetdmHostCollector();
-$oFLTCollector->Run();
-Orchestrator::AddCollector(1, 'FleetdmHostCollector');
+require_once(APPROOT . 'collectors/src/FleetDMCollectionPlan.class.inc.php');
+
+$oFLTCollector = new FleetDMCollectionPlan();
+$oFLTCollector->Init();
+
+$oFLTCollector->AddCollectorsToOrchestrator();
+// Orchestrator::AddCollector(1, 'FleetdmHostCollector');

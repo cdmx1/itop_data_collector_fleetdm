@@ -144,12 +144,23 @@ abstract class JsonCollector extends Collector
 				$aDataGet = [];
 			}
 			$iSynchroTimeout = (int)Utils::GetConfigurationValue('itop_synchro_timeout', 600); // timeout in seconds, for a synchro to run
-			$aCurlOptions = Utils::GetCurlOptions($iSynchroTimeout);
+			// $aCurlOptions = Utils::GetCurlOptions($iSynchroTimeout);
+
+			$sBearerToken = isset($aParamsSourceJson["bearer_token"]) ? $aParamsSourceJson["bearer_token"] : null;
+
+			// Prepare headers string
+			// $sOptionnalHeaders = "Content-Type: application/x-www-form-urlencoded\n";
+			// if ($sBearerToken) {
+			// 	// Add Bearer token to headers
+			// 	$sOptionnalHeaders .= "Authorization: Bearer $sBearerToken\n";
+			// }
 
 			//logs
+			Utils::Log(LOG_INFO, 'Source sOptionnalHeaders: '. $sOptionnalHeaders);
 			Utils::Log(LOG_DEBUG, 'Source aDataGet: '.json_encode($aDataGet));
-			$this->sFileJson = Utils::DoPostRequest($this->sURL, $aDataGet, '', $aResponseHeaders, $aCurlOptions);
-			Utils::Log(LOG_DEBUG, 'Source sFileJson: '.$this->sFileJson);
+			// $this->sFileJson = Utils::DoPostRequest($this->sURL, $aDataGet, $sOptionnalHeaders, $aResponseHeaders, $aCurlOptions);
+			$this->sFileJson = $this->fetchDataWithBearerToken($this->sURL, $sBearerToken);
+			Utils::Log(LOG_INFO, 'Source sFileJson: '.$this->sFileJson);
 			Utils::Log(LOG_INFO, 'Synchro URL (target): '.Utils::GetConfigurationValue('itop_url', array()));
 		} else {
 			$this->sFileJson = file_get_contents($this->sFilePath);
@@ -356,6 +367,37 @@ abstract class JsonCollector extends Collector
 		}
 
 		return parent::AttributeIsOptional($sAttCode);
+	}
+
+	private function fetchDataWithBearerToken($url, $bearerToken)
+	{
+		// Define your Bearer token inside the function
+		$bearerToken = Utils::GetConfigurationValue('jsonpost', '')['api_token'];
+
+		// Initialize cURL
+		$ch = curl_init($url);
+
+		// Set the cURL options
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // Return the response as a string
+		curl_setopt($ch, CURLOPT_HTTPHEADER, [
+			"Authorization: Bearer $bearerToken",  // Set the Authorization header with Bearer token
+			"Content-Type: application/json"       // Set content type to JSON (optional based on your API)
+		]);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+		// Execute the request and get the response
+		$response = curl_exec($ch);
+
+		// Check for errors
+		if (curl_errno($ch)) {
+			echo 'cURL Error: ' . curl_error($ch);
+		} else {
+			// Return the response
+			return $response;
+		}
+
+		// Close the cURL session
+		curl_close($ch);
 	}
 
 }

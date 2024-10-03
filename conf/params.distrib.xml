@@ -59,6 +59,11 @@
    -->
   <data_path>%APPROOT%/data</data_path>
 
+    <jsonpost>
+    <!-- Example POST data for JSON retrieval -->
+    <api_token>CSfmI5VJSJbb44SGrB0i9oYLtgVuQUoPhidMQwR4YDskwG4OW+RmI717De4Qw+Yc/jClZQXK3bn6yCd3iR+Vsw==</api_token>
+  </jsonpost>
+
   <!-- Maximum number of elements to process in one iteration (for upload and synchro in iTop) -->
   <max_chunk_size>1000</max_chunk_size>
   <!-- Timeout for waiting for the execution of one data synchro task (in seconds) -->

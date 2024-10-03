@@ -3,7 +3,7 @@
  * @copyright   Copyright (C) 2010-2023 Combodo SARL
  * @license     http://opensource.org/licenses/AGPL-3.0
  */
-abstract class AbstractFleetDMCollector extends MySQLCollector
+abstract class AbstractFleetDMCollector extends JsonCollector
 {
     protected $oFleetDMCollectionPlan;
     /**
@@ -39,7 +39,7 @@ abstract class AbstractFleetDMCollector extends MySQLCollector
             return false;
         }
 
-        $bRet = $this->Connect(); // Establish the connection to the database
+        // $bRet = $this->Connect(); // Establish the connection to the database
         if (!$bRet) {
             return false;
         }
