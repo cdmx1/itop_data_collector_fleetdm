@@ -32,74 +32,74 @@ abstract class AbstractFleetDMCollector extends JsonCollector
      *
      * @see Collector::Prepare()
      */
-    public function Prepare()
-    {
-        $bRet = parent::Prepare();
-        if (!$bRet) {
-            return false;
-        }
+    // public function Prepare()
+    // {
+    //     $bRet = parent::Prepare();
+    //     if (!$bRet) {
+    //         return false;
+    //     }
 
-        // $bRet = $this->Connect(); // Establish the connection to the database
-        if (!$bRet) {
-            return false;
-        }
+    //     // $bRet = $this->Connect(); // Establish the connection to the database
+    //     if (!$bRet) {
+    //         return false;
+    //     }
 
-        // Read the SQL query from the configuration
-        $sSQLQueryName =  $this->GetSQLQueryName(); // by default "_query"
-        $sQuery = Utils::GetConfigurationValue(get_class($this) .$sSQLQueryName, '');
-	    if ($sQuery == '') {
-            // Try all lowercase
-            $sQuery = Utils::GetConfigurationValue(strtolower(get_class($this)) . $sSQLQueryName, '');
-        }
+    //     // Read the SQL query from the configuration
+    //     $sSQLQueryName =  $this->GetSQLQueryName(); // by default "_query"
+    //     $sQuery = Utils::GetConfigurationValue(get_class($this) .$sSQLQueryName, '');
+	//     if ($sQuery == '') {
+    //         // Try all lowercase
+    //         $sQuery = Utils::GetConfigurationValue(strtolower(get_class($this)) . $sSQLQueryName, '');
+    //     }
 
-        if ($sQuery == '') {
-            // No query at all !!
-            Utils::Log(LOG_ERR, "[" . get_class($this) . "] no SQL query configured! Cannot collect data. The query was expected to be configured as '" . strtolower(get_class($this)).$sSQLQueryName . "' in the configuration file.");
+    //     if ($sQuery == '') {
+    //         // No query at all !!
+    //         Utils::Log(LOG_ERR, "[" . get_class($this) . "] no SQL query configured! Cannot collect data. The query was expected to be configured as '" . strtolower(get_class($this)).$sSQLQueryName . "' in the configuration file.");
 
-            return false;
-        }
+    //         return false;
+    //     }
 
-        //replace others params in query specially used when a request is used in order to replace some fields
-        $this->AddOtherParams($sQuery);
+    //     //replace others params in query specially used when a request is used in order to replace some fields
+    //     $this->AddOtherParams($sQuery);
 
-        $this->oStatement = $this->oDB->prepare($sQuery);
-        if ($this->oStatement === false) {
-            $aInfo = $this->oDB->errorInfo();
-            Utils::Log(LOG_ERR, "[" . get_class($this) . "] Failed to prepare the query: '$sQuery'. Reason: " . $aInfo[0] . ', ' . $aInfo[2]);
+    //     $this->oStatement = $this->oDB->prepare($sQuery);
+    //     if ($this->oStatement === false) {
+    //         $aInfo = $this->oDB->errorInfo();
+    //         Utils::Log(LOG_ERR, "[" . get_class($this) . "] Failed to prepare the query: '$sQuery'. Reason: " . $aInfo[0] . ', ' . $aInfo[2]);
 
-            return false;
-        }
+    //         return false;
+    //     }
 
-        $this->oStatement->execute();
-        if ($this->oStatement->errorCode() !== '00000') {
-            $aInfo = $this->oStatement->errorInfo();
-            Utils::Log(LOG_ERR, "[" . get_class($this) . "] Failed to execute the query: '$sQuery'. Reason: " . $aInfo[0] . ', ' . $aInfo[2]);
+    //     $this->oStatement->execute();
+    //     if ($this->oStatement->errorCode() !== '00000') {
+    //         $aInfo = $this->oStatement->errorInfo();
+    //         Utils::Log(LOG_ERR, "[" . get_class($this) . "] Failed to execute the query: '$sQuery'. Reason: " . $aInfo[0] . ', ' . $aInfo[2]);
 
-            return false;
-        }
+    //         return false;
+    //     }
 
-        $this->idx = 0;
+    //     $this->idx = 0;
 
-        return true;
-    }
+    //     return true;
+    // }
 
-	protected function TestIfTableExistsInFleetDM($sTableName){
-		if($this->oDB == null){
-			$this->Connect();
-		}
-		$oExistsStatement = $this->oDB->query("SHOW TABLES LIKE '$sTableName'");
-		if ($oExistsStatement === false) {
-			$aInfo = $this->oDB->errorInfo();
-			Utils::Log(LOG_ERR, "[" . get_class($this) . "] Failed to prepare the query: SHOW TABLES LIKE '$sTableName'. Reason: " . $aInfo[0] . ', ' . $aInfo[2]);
-			return false;
-		}
+	// protected function TestIfTableExistsInFleetDM($sTableName){
+	// 	if($this->oDB == null){
+	// 		$this->Connect();
+	// 	}
+	// 	$oExistsStatement = $this->oDB->query("SHOW TABLES LIKE '$sTableName'");
+	// 	if ($oExistsStatement === false) {
+	// 		$aInfo = $this->oDB->errorInfo();
+	// 		Utils::Log(LOG_ERR, "[" . get_class($this) . "] Failed to prepare the query: SHOW TABLES LIKE '$sTableName'. Reason: " . $aInfo[0] . ', ' . $aInfo[2]);
+	// 		return false;
+	// 	}
 
-		if ($oExistsStatement->fetch()){
-			return true;
-		} else {
-			return false;
-		}
-	}
+	// 	if ($oExistsStatement->fetch()){
+	// 		return true;
+	// 	} else {
+	// 		return false;
+	// 	}
+	// }
 
     /**
      * Get the end of SQL parameter name (prefixed by class name) in the config file

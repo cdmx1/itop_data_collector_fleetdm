@@ -130,6 +130,7 @@ class LookupTable
 		if ($iLineIndex == 0) {
 			$this->InitLineMappings($aLineData, array_merge($aLookupFields, array($sDestField)));
 		} else {
+			var_dump("Fields", $sDestField);
 			$iPos = $this->aFieldsPos[$sDestField];
 			//skip search if field is empty
 			if ($bSkipIfEmpty && $iPos !== null && $aLineData[$iPos] === '' ) {
