@@ -277,32 +277,166 @@ abstract class JsonCollector extends Collector
 	 * @return array
 	 * @throws \Exception
 	 */
-	private function SearchFieldValues($aData, $aTestOnlyFieldsKey=null) {
+	private function SearchFieldValues($aData, $aTestOnlyFieldsKey = null) {
 		$aDataToSynchronize = [];
-
+	
+		// Determine which fields to use
 		$aCurrentFieldKeys = (is_null($aTestOnlyFieldsKey)) ? $this->aFieldsKey : $aTestOnlyFieldsKey;
 		foreach ($aCurrentFieldKeys as $key => $sPath) {
 			if ($this->iIdx == 0) {
-				Utils::Log(LOG_DEBUG, $key.":".array_search($key, $aCurrentFieldKeys));
+				// Log key and index position
+				Utils::Log(LOG_INFO, "Processing key: $key with index: " . array_search($key, $aCurrentFieldKeys));
 			}
-			//
+	
+			// Log the JSON key path
 			$aJsonKeyPath = explode('/', $sPath);
+			Utils::Log(LOG_INFO, "Searching for value in path: " . implode(' -> ', $aJsonKeyPath));
+	
+			// Search for the value in the data
 			$aValue = $this->SearchValue($aJsonKeyPath, $aData);
 
-			if (empty($aValue) && array_key_exists($key, $this->aSynchroFieldsToDefaultValues)){
+			if ($key == "brand_id") {
+				// Check if the brand exists in iTop
+				$brandExists = $this->checkBrandExists($aValue);
+				if (!$brandExists) {
+					// If not found, create the brand
+					$createResponse = $this->createBrand($aValue);
+					if ($createResponse['code'] != 0) {
+						Utils::Log(LOG_ERR, "Failed to create brand: {$createResponse['message']}");
+					} else {
+						Utils::Log(LOG_INFO, "Brand created successfully with ID: {$createResponse['id']}");
+					}
+				} else {
+					Utils::Log(LOG_INFO, "Brand already exists with ID: $aValue");
+				}
+			}
+			if (empty($aValue) && array_key_exists($key, $this->aSynchroFieldsToDefaultValues)) {
+				// Use default value if field is empty
 				$sDefaultValue = $this->aSynchroFieldsToDefaultValues[$key];
-				Utils::Log(LOG_DEBUG, "aDataToSynchronize[$key]: $sDefaultValue");
+				Utils::Log(LOG_INFO, "Using default value for $key: $sDefaultValue");
 				$aDataToSynchronize[$key] = $sDefaultValue;
-			} else if (! is_null($aValue)){
-				Utils::Log(LOG_DEBUG, "aDataToSynchronize[$key]: $aValue");
+			} else if (!is_null($aValue)) {
+				// Log the actual value found
+				Utils::Log(LOG_INFO, "Found value for $key: " . print_r($aValue, true));
 				$aDataToSynchronize[$key] = $aValue;
 			}
 		}
+		$osFamilyId = $aDataToSynchronize['osfamily_id'];
+		$osVersionId = $aDataToSynchronize['osversion_id'];
 
-		Utils::Log(LOG_DEBUG, '$aDataToSynchronize: '.json_encode($aDataToSynchronize));
+		// Step 1: Check if the OS Family exists
+		if (!$this->checkOsFamilyExists($osFamilyId)) {
+			// OS Family does not exist, create it
+			$this->createOsFamily($osFamilyId);
+			Utils::Log(LOG_INFO, "Created OS Family: " . $osFamilyId);
+		} else {
+			Utils::Log(LOG_INFO, "OS Family already exists: " . $osFamilyId);
+		}
+
+		// Step 2: Now check if the OS Version exists for the created or existing OS Family
+		$oResultOsExists = $this->checkOsVersionExists($osVersionId, $osFamilyId);
+		$resultOsExists = $oResultOsExists->result;
+		$resultOsVersionId = $oResultOsExists->osVersionId;
+		if (!$resultOsExists) {
+			// OS Version does not exist, create it
+			$oResult = $this->createOsVersion($osVersionId, $osFamilyId);
+			Utils::Log(LOG_INFO, "createOsVersion: " . print_r($oResult, true));
+			
+			Utils::Log(LOG_INFO, "Created OS Version: " . $osVersionId . " for OS Family: " . $osFamilyId);
+		} else {
+			Utils::Log(LOG_INFO, "OS Version already exists: " . $osVersionId);
+		}
+		$aDataToSynchronize['osversion_id'] = $resultOsVersionId;
+		Utils::Log(LOG_INFO, 'Final data to synchronize: ' . json_encode($aDataToSynchronize, JSON_PRETTY_PRINT));
 		return $aDataToSynchronize;
 	}
 
+	private function checkBrandExists($brandName) {
+		// Use the RestClient to search for the brand by name
+		$restClient = new RestClient();
+		// Prepare a search query to find the brand by its name
+		$query = sprintf("SELECT Brand WHERE name='%s'", addslashes($brandName));
+		// Perform the search
+		$result = $restClient->Get('Brand', $query);
+		// Assuming code 0 means success and we have results
+		return $result['code'] == 0 && !empty($result['objects']);
+	}
+	private function createBrand($brandId) {
+		$restClient = new RestClient();
+		$validAttributes = [
+			'name' => $brandId
+		];
+		return $restClient->Create('Brand', $validAttributes, 'Created brand from synchronization process');
+	}
+	private function createOsFamily($osFamilyId) {
+		// Initialize the RestClient
+		$restClient = new RestClient();
+	
+		// Prepare valid attributes for the OS Family
+		$validAttributes = [
+			'name' => $osFamilyId  // Adjust this key based on your iTop OS Family model
+		];
+	
+		// Create the OS Family using the RestClient
+		return $restClient->Create('OSFamily', $validAttributes, 'Created OS Family from synchronization process');
+	}
+	private function checkOsFamilyExists($osFamilyName) {
+		// Use the RestClient to search for the OS Family by name
+		$restClient = new RestClient();
+		
+		// Prepare a search query to find the OS Family by its name
+		$query = sprintf("SELECT OSFamily WHERE name='%s'", addslashes($osFamilyName));
+		
+		// Perform the search
+		$result = $restClient->Get('OSFamily', $query);
+		
+		// Assuming code 0 means success and we have results
+		return $result['code'] == 0 && !empty($result['objects']);
+	}
+	private function createOsVersion($osVersionId, $osFamilyName) {
+		// Initialize the RestClient
+		$restClient = new RestClient();
+
+		$query = sprintf("SELECT OSFamily WHERE name='%s'", addslashes($osFamilyName));
+		$familyResult = $restClient->Get('OSFamily', $query);
+		$osFamilyId = $familyResult['objects'][array_key_first($familyResult['objects'])]['key']; // Adjust based on your API response structure
+
+        // Log the retrieved OS Family ID for debugging
+        Utils::Log(LOG_INFO, "Retrieved OS Family ID: " . $osFamilyId);
+		
+		// Prepare valid attributes for the OS Version, including the OS family ID
+		$validAttributes = [
+			'name' => $osVersionId,  // Adjust this key based on your iTop OS Version model
+			'osfamily_id' => $osFamilyId  // Associate with the specific OS family
+		];
+		// Create the OS Version using the RestClient
+		return $restClient->Create('OSVersion', $validAttributes, 'Created OS Version from synchronization process');
+	}
+	private function checkOsVersionExists($osVersionName, $osFamilyName) {
+		// Use the RestClient to search for the OS Version by name within the specific OS Family
+		$restClient = new RestClient();
+		$query = sprintf("SELECT OSFamily WHERE name='%s'", addslashes($osFamilyName));
+		$familyResult = $restClient->Get('OSFamily', $query);
+		$osFamilyId = $familyResult['objects'][array_key_first($familyResult['objects'])]['key']; // Adjust based on your API response structure
+
+		// Prepare a search query to find the OS Version by its name within the specified OS Family
+		$query = sprintf("SELECT OSVersion WHERE name='%s' AND osfamily_id='%s'", 
+						 addslashes($osVersionName), 
+						 addslashes($osFamilyId));
+		
+		// Perform the search
+		$result = $restClient->Get('OSVersion', $query);
+		$osVersionId = $result['objects'][array_key_first($result['objects'])]['key'];
+		Utils::Log(LOG_INFO, "osVersionId: " . print_r($osVersionId, true));
+		
+		// Assuming code 0 means success and we have results
+		if ($result['code'] == 0 && is_array($result['objects']) && !empty($result['objects'])) {
+			return (object) [
+				'result' => $result,
+				'osVersionId' => $osVersionId
+			];
+		}
+	}
 	private function SearchValue($aJsonKeyPath, $aData){
 		$sTag = array_shift($aJsonKeyPath);
 

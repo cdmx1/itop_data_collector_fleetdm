@@ -489,6 +489,7 @@ abstract class Collector
 					case 0:
 						// not found, need to create the Source
 						Utils::Log(LOG_INFO, "There is no Synchro Data Source named '{$this->sSourceName}' in iTop. Let's create it.");
+						//die();
 						$key = $this->CreateSynchroDataSource($aExpectedSourceDefinition, $this->GetName());
 						if ($key === false) {
 							$bResult = false;
@@ -496,6 +497,7 @@ abstract class Collector
 						break;
 
 					case 1:
+						Utils::Log(LOG_DEBUG, "One Synchro Data Source found. Checking if up to date.");
 						foreach ($aResult['objects'] as $sKey => $aData) {
 							// Ok, found, is it up to date ?
 							$aData = reset($aResult['objects']);
@@ -569,7 +571,6 @@ abstract class Collector
 			$bResult = false;
 			Utils::Log(LOG_ERR, get_class($this)."::Collect() got an exception: ".$e->getMessage());
 		}
-
 		return $bResult;
 	}
 
@@ -683,11 +684,11 @@ abstract class Collector
 			} else {
 				$sOutput = 'retcode';
 			}
-
+            Utils::Log(LOG_INFO, "Uploading data file '$this->iSourceId'");
 			$aData = array(
 				'separator' => ';',
 				'data_source_id' => $this->iSourceId,
-				'synchronize' => '0',
+				'synchronize' => '1',
 				'no_stop_on_import_error' => 1,
 				'output' => $sOutput,
 				'csvdata' => file_get_contents($sDataFile),
@@ -698,7 +699,6 @@ abstract class Collector
 			$sLoginform = Utils::GetLoginMode();
 			$sResult = self::CallItopViaHttp("/synchro/synchro_import.php?login_mode=$sLoginform",
 				$aData);
-
 			$sTrimmedOutput = trim(strip_tags($sResult));
 			$sErrorCount = self::ParseSynchroImportOutput($sTrimmedOutput, $bDetailedOutput);
 
@@ -716,14 +716,10 @@ abstract class Collector
 		$aData = array(
 			'data_sources' => $this->iSourceId,
 		);
-		if ($iMaxChunkSize > 0) {
-			$aData['max_chunk_size'] = $iMaxChunkSize;
-		}
 
 		$sLoginform = Utils::GetLoginMode();
 		$sResult = self::CallItopViaHttp("/synchro/synchro_exec.php?login_mode=$sLoginform",
 			$aData);
-
 		$iErrorsCount = $this->ParseSynchroExecOutput($sResult);
 
 		return ($iErrorsCount == 0);
