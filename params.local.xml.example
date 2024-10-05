@@ -90,8 +90,8 @@
     </collector>
   </collectors_launch_sequence>
 
+  <jsonurl>https://fdm.example.com</jsonurl>
   <FleetDMPCCollector>
-    <jsonurl>https://fdm.example.com/api/v1/fleet/labels/19/hosts</jsonurl>
     <jsonpost>
       <json_data>
       </json_data>

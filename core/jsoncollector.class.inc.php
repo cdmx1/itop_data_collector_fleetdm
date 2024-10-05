@@ -79,34 +79,6 @@ abstract class JsonCollector extends Collector
 			$this->sJsonCliCommand = $aParamsSourceJson["COMMAND"];
 			Utils::Log(LOG_INFO, "[".get_class($this)."] CLI command used is [".$this->sJsonCliCommand."]");
 		}
-
-
-		// Read the URL or Path from the configuration
-		if (isset($aParamsSourceJson["jsonurl"])) {
-			$this->sURL = $aParamsSourceJson["jsonurl"];
-		}
-		if (isset($aParamsSourceJson["JSONURL"])) {
-			$this->sURL = $aParamsSourceJson["JSONURL"];
-		}
-
-		if ($this->sURL == '') {
-			if (isset($aParamsSourceJson["jsonfile"])) {
-				$this->sFilePath = $aParamsSourceJson["jsonfile"];
-			}
-			if (isset($aParamsSourceJson["JSONFILE"])) {     // Try all lowercase
-				$this->sFilePath = $aParamsSourceJson["JSONFILE"];
-			}
-			Utils::Log(LOG_INFO, "Source file path: ".$this->sFilePath);
-		} else {
-			Utils::Log(LOG_INFO, "Source URL: ".$this->sURL);
-		}
-
-		if ($this->sURL == '' && $this->sFilePath == '') {
-			// No query at all !!
-			Utils::Log(LOG_ERR, "[".get_class($this)."] no json URL or path configured! Cannot collect data. Please configure it as '<jsonurl>' or '<jsonfile>' in the configuration file.");
-
-			return false;
-		}
 		if (array_key_exists('defaults', $aParamsSourceJson)) {
 			if ($aParamsSourceJson['defaults'] !== '') {
 				$this->aSynchroFieldsToDefaultValues = $aParamsSourceJson['defaults'];
@@ -135,7 +107,6 @@ abstract class JsonCollector extends Collector
 		}
 
 		//get Json file
-		if ($this->sURL != '') {
 			Utils::Log(LOG_DEBUG, 'Get params for uploading data file ');
             $aDataGet = [];
 			if (isset($aParamsSourceJson["jsonpost"])) {
@@ -144,28 +115,61 @@ abstract class JsonCollector extends Collector
 				$aDataGet = [];
 			}
 			$iSynchroTimeout = (int)Utils::GetConfigurationValue('itop_synchro_timeout', 600); // timeout in seconds, for a synchro to run
-			// $aCurlOptions = Utils::GetCurlOptions($iSynchroTimeout);
 
 			$sBearerToken = isset($aParamsSourceJson["bearer_token"]) ? $aParamsSourceJson["bearer_token"] : null;
 
-			// Prepare headers string
-			// $sOptionnalHeaders = "Content-Type: application/x-www-form-urlencoded\n";
-			// if ($sBearerToken) {
-			// 	// Add Bearer token to headers
-			// 	$sOptionnalHeaders .= "Authorization: Bearer $sBearerToken\n";
-			// }
+			$jsonUrl = Utils::GetConfigurationValue('jsonurl', '');
+			$sBaseUrl = $jsonUrl . "/api/v1/fleet/labels/";
+			Utils::Log(LOG_INFO, "JSON URL from config: " . $sBaseUrl);
 
-			//logs
-			Utils::Log(LOG_DEBUG, 'Source aDataGet: '.json_encode($aDataGet));
-			// $this->sFileJson = Utils::DoPostRequest($this->sURL, $aDataGet, $sOptionnalHeaders, $aResponseHeaders, $aCurlOptions);
-			$this->sFileJson = $this->fetchDataWithBearerToken($this->sURL, $sBearerToken);
-			// Utils::Log(LOG_INFO, 'Source sFileJson: '.$this->sFileJson);
+			// Get the array of label IDs from the configuration
+			$labels = Utils::GetConfigurationValue('labels', '');
+
+			if (empty($labels)) {
+				Utils::Log(LOG_ERR, "[".get_class($this)."] No labels configured. Please provide label IDs in the configuration.");
+				return false;
+			}
+            
+			// Initialize the array to hold merged data from all labels
+			$aDataGet = [];
+
+			// Iterate over each label ID to build the full URL and fetch data
+			foreach ($labels as $label) {
+				// Ensure label is treated as a string
+				$labelId = (string)$label['fleet_dm_id']; 
+				$this->sURL = $sBaseUrl . $labelId . "/hosts";
+				Utils::Log(LOG_DEBUG, 'Fetching data for label ID: ' . $labelId);
+				
+				$iSynchroTimeout = (int) Utils::GetConfigurationValue('itop_synchro_timeout', 600); // timeout in seconds, for a synchro to run
+				$sBearerToken = isset($aParamsSourceJson["bearer_token"]) ? $aParamsSourceJson["bearer_token"] : null;
+				
+				// Fetch the data for the current label's URL using the bearer token (if provided)
+				$this->sFileJson = $this->fetchDataWithBearerToken($this->sURL, $sBearerToken);
+				// Check if data fetching was successful
+				if ($this->sFileJson === false) {
+					Utils::Log(LOG_ERR, '[' . get_class($this) . '] Failed to get JSON file for label ID: ' . $labelId);
+					return false;
+				}
+
+				// Decode the fetched JSON
+				$aJson = json_decode($this->sFileJson, true);
+				if ($aJson == null) {
+					Utils::Log(LOG_ERR, "[" . get_class($this) . "] Failed to parse JSON file for label ID: '" . $labelId . "'. Reason: " . json_last_error_msg());
+					return false;
+				}
+
+				// Merge the fetched data into $aDataGet
+				if (!empty($aJson)) {
+					$aDataGet = array_merge($aDataGet, $aJson); // Merging fetched data into the main array
+				}
+
+				Utils::Log(LOG_DEBUG, "Data merged from label ID: " . $labelId);
+			}
+
+			// Log the final merged data
+			//Utils::Log(LOG_INFO, 'Final merged aDataGet: ' . json_encode($aDataGet));
+			
 			Utils::Log(LOG_INFO, 'Synchro URL (target): '.Utils::GetConfigurationValue('itop_url', array()));
-		} else {
-			$this->sFileJson = file_get_contents($this->sFilePath);
-			// Utils::Log(LOG_DEBUG, 'Source sFileJson: '.$this->sFileJson);
-			Utils::Log(LOG_INFO, 'Synchro  URL (target): '.Utils::GetConfigurationValue('itop_url', array()));
-		}
 
 		//verify the file
 		if ($this->sFileJson === false) {
@@ -173,10 +177,9 @@ abstract class JsonCollector extends Collector
 
 			return false;
 		}
-
-
 		//**** step 3 : read json file
 		$this->aJson = json_decode($this->sFileJson, true);
+		Utils::Log(LOG_INFO, 'Final merged aDataGet: ' . json_encode($this->sFileJson));
 		if ($this->aJson == null) {
 			Utils::Log(LOG_ERR, "[".get_class($this)."] Failed to translate data from JSON file: '".$this->sURL.$this->sFilePath."'. Reason: ".json_last_error_msg());
 
@@ -426,6 +429,11 @@ abstract class JsonCollector extends Collector
 		
 		// Perform the search
 		$result = $restClient->Get('OSVersion', $query);
+		// Check if the result contains objects
+		if (empty($result['objects'])) {
+			Utils::Log(LOG_INFO, "OS Version '$osVersionName' not found in OS Family '$osFamilyName'.");
+			return null; // or handle it as necessary
+		}
 		$osVersionId = $result['objects'][array_key_first($result['objects'])]['key'];
 		Utils::Log(LOG_INFO, "osVersionId: " . print_r($osVersionId, true));
 		
