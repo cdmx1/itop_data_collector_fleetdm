@@ -156,15 +156,14 @@ abstract class JsonCollector extends Collector
 			// }
 
 			//logs
-			Utils::Log(LOG_INFO, 'Source sOptionnalHeaders: '. $sOptionnalHeaders);
 			Utils::Log(LOG_DEBUG, 'Source aDataGet: '.json_encode($aDataGet));
 			// $this->sFileJson = Utils::DoPostRequest($this->sURL, $aDataGet, $sOptionnalHeaders, $aResponseHeaders, $aCurlOptions);
 			$this->sFileJson = $this->fetchDataWithBearerToken($this->sURL, $sBearerToken);
-			Utils::Log(LOG_INFO, 'Source sFileJson: '.$this->sFileJson);
+			// Utils::Log(LOG_INFO, 'Source sFileJson: '.$this->sFileJson);
 			Utils::Log(LOG_INFO, 'Synchro URL (target): '.Utils::GetConfigurationValue('itop_url', array()));
 		} else {
 			$this->sFileJson = file_get_contents($this->sFilePath);
-			Utils::Log(LOG_DEBUG, 'Source sFileJson: '.$this->sFileJson);
+			// Utils::Log(LOG_DEBUG, 'Source sFileJson: '.$this->sFileJson);
 			Utils::Log(LOG_INFO, 'Synchro  URL (target): '.Utils::GetConfigurationValue('itop_url', array()));
 		}
 

@@ -54,28 +54,50 @@ abstract class CollectionPlan
 	 * @throws \Exception
 	 */
 	public function GetSortedLaunchSequence(): array
-	{
-		$aCollectorsLaunchSequence = utils::GetConfigurationValue('collectors_launch_sequence', []);
-		$aExtensionsCollectorsLaunchSequence = utils::GetConfigurationValue('extensions_collectors_launch_sequence', []);
-		$aCollectorsLaunchSequence = array_merge($aCollectorsLaunchSequence, $aExtensionsCollectorsLaunchSequence);
-		if (!empty($aCollectorsLaunchSequence)) {
-			// Sort sequence
-			$aSortedCollectorsLaunchSequence = [];
-			foreach ($aCollectorsLaunchSequence as $aCollector) {
-				if (array_key_exists('rank', $aCollector)) {
-					$aRank[] = $aCollector['rank'];
-					$aSortedCollectorsLaunchSequence[] = $aCollector;
-				} else {
-					Utils::Log(LOG_INFO, "> Rank is missing from the launch_sequence of ".$aCollector['name']." It will not be launched.");
-				}
-			}
-			array_multisort($aRank, SORT_ASC, $aSortedCollectorsLaunchSequence);
+{
+    Utils::Log(LOG_INFO, "Fetching collectors_launch_sequence...");
+    $aCollectorsLaunchSequence = utils::GetConfigurationValue('collectors_launch_sequence', []);
+    
+    Utils::Log(LOG_INFO, "Fetching extensions_collectors_launch_sequence...");
+    $aExtensionsCollectorsLaunchSequence = utils::GetConfigurationValue('extensions_collectors_launch_sequence', []);
+    
+    // Debug log the sequences retrieved
+    Utils::Log(LOG_DEBUG, "Initial collectors_launch_sequence: " . print_r($aCollectorsLaunchSequence, true));
+    Utils::Log(LOG_DEBUG, "Initial extensions_collectors_launch_sequence: " . print_r($aExtensionsCollectorsLaunchSequence, true));
+    
+    // Merge sequences
+    $aCollectorsLaunchSequence = array_merge($aCollectorsLaunchSequence, $aExtensionsCollectorsLaunchSequence);
+    if (!empty($aCollectorsLaunchSequence)) {
+        // Initialize rank and sorted array
+        $aSortedCollectorsLaunchSequence = [];
+        $aRank = []; // Add rank initialization
 
-			return $aSortedCollectorsLaunchSequence;
-		}
+        foreach ($aCollectorsLaunchSequence as $aCollector) {
+            // Check if rank exists and log collector details
+            if (array_key_exists('rank', $aCollector)) {
+                $aRank[] = $aCollector['rank'];
+                $aSortedCollectorsLaunchSequence[] = $aCollector;
+            } else {
+                Utils::Log(LOG_INFO, "> Rank is missing from the launch_sequence of " . $aCollector['name'] . ". It will not be launched.");
+            }
+        }
+        
+        // Sort by rank
+        Utils::Log(LOG_INFO, "Sorting collectors by rank...");
+        array_multisort($aRank, SORT_ASC, $aSortedCollectorsLaunchSequence);
+        
+        // Log the final sorted sequence
+        Utils::Log(LOG_DEBUG, "Sorted collectors_launch_sequence: " . print_r($aSortedCollectorsLaunchSequence, true));
 
-		return $aCollectorsLaunchSequence;
-	}
+        return $aSortedCollectorsLaunchSequence;
+    }
+
+    // Log in case the sequence was empty
+    Utils::Log(LOG_INFO, "No collectors to launch.");
+
+    return $aCollectorsLaunchSequence;
+}
+
 
 	/**
 	 * Look for the collector definition file in the different possible collector directories

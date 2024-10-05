@@ -1,78 +1,137 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <parameters>
   <!-- iTop connection settings -->
-  <itop_url>https://localhost/itop</itop_url> <!-- Update with the actual iTop URL -->
-  <itop_login>admin</itop_login> <!-- Update with actual iTop admin username -->
-  <itop_password>admin_password</itop_password> <!-- Update with the actual iTop password -->
+  <itop_url>http://localhost</itop_url>  <!-- Update with the actual iTop URL -->
+  <itop_login>admin</itop_login>  <!-- Update with actual iTop admin username -->
+  <itop_password>admin_password</itop_password>  <!-- Update with the actual iTop password -->
 
   <!-- Optional: Token-based authentication -->
   <itop_token></itop_token>
   <itop_login_mode></itop_login_mode>
 
   <!-- Logging configuration -->
-  <console_log_level>6</console_log_level> <!-- Info level logging -->
-  <eventissue_log_level>-1</eventissue_log_level> <!-- No event issue logging -->
+  <console_log_level>6</console_log_level>  <!-- Info level logging -->
+  <eventissue_log_level>-1</eventissue_log_level>  <!-- No event issue logging -->
   <console_log_dateformat>[Y-m-d H:i:s]</console_log_dateformat>
 
   <!-- Syslog logging level -->
-  <syslog_log_level>-1</syslog_log_level> <!-- No syslog logging -->
+  <syslog_log_level>-1</syslog_log_level>  <!-- No syslog logging -->
 
   <!-- Temporary data path (relative to the collector directory) -->
   <data_path>%APPROOT%/data</data_path>
 
   <!-- Synchronization settings -->
-  <max_chunk_size>1000</max_chunk_size> <!-- Maximum items processed in one sync -->
-  <itop_synchro_timeout>600</itop_synchro_timeout> <!-- 10 minute timeout -->
-  <stop_on_synchro_error>no</stop_on_synchro_error> <!-- Continue on error -->
+  <max_chunk_size>1000</max_chunk_size>  <!-- Maximum items processed in one sync -->
+  <itop_synchro_timeout>600</itop_synchro_timeout>  <!-- 10 minute timeout -->
+  <stop_on_synchro_error>no</stop_on_synchro_error>  <!-- Continue on error -->
 
   <!-- cURL options for HTTPS communication -->
   <curl_options>
-    <CURLOPT_SSL_VERIFYHOST>0</CURLOPT_SSL_VERIFYHOST> <!-- Disable hostname verification -->
-    <CURLOPT_SSL_VERIFYPEER>1</CURLOPT_SSL_VERIFYPEER> <!-- Enable peer certificate verification -->
+    <CURLOPT_SSL_VERIFYHOST>0</CURLOPT_SSL_VERIFYHOST>    <!-- Disable hostname verification -->
+    <CURLOPT_SSL_VERIFYPEER>1</CURLOPT_SSL_VERIFYPEER>    <!-- Enable peer certificate verification -->
   </curl_options>
 
   <!-- Email notification settings -->
-  <contact_to_notify>support@yourdomain.com</contact_to_notify> <!-- Contact email for error notifications -->
-  
+  <contact_to_notify></contact_to_notify>  <!-- Contact email for error notifications -->
+
   <!-- Synchronization user (usually same as iTop login) -->
   <synchro_user>admin</synchro_user>
-
   <!-- Date format in collected data -->
   <date_format>Y-m-d</date_format>
-
-  <!-- FleetDM JSON collector settings -->
-  <!-- Define path or URL for the JSON file to collect host data from FleetDM -->
-  <jsonurl>https://xxx.xxx.xx/api/v1/fleet/hosts</jsonurl>
-  
-  <!-- Optional POST data for JSON retrieval, if needed -->
-  <jsonpost>
-    <!-- Example POST data for JSON retrieval -->
-    <api_token>YOUR_API_TOKEN_HERE</api_token>
-  </jsonpost>
-
+  <labels type="array">
+    <label>
+      <name>PC</name>
+      <fleet_dm_id>19</fleet_dm_id>
+      <api_params>
+        <computer_name>computer_name</computer_name>
+        <cpu_type>cpu_brand</cpu_type>
+        <brand>hardware_vendor</brand>
+        <ram>memory</ram>
+        <serialnumber>hardware_serial</serialnumber>
+        <platform>platform</platform>
+        <type>desktop</type>
+      </api_params>
+      <default_values>
+        <prefix>default value</prefix>
+        <type>desktop</type>
+      </default_values>
+      <itop_json_source>PcSource.json</itop_json_source>
+      <unique_identifier>name</unique_identifier>
+    </label>
+    <label>
+      <name>PC</name>
+      <fleet_dm_id>21</fleet_dm_id>
+      <api_params>
+        <computer_name>computer_name</computer_name>
+        <cpu_type>cpu_brand</cpu_type>
+        <brand>hardware_vendor</brand>
+        <ram>memory</ram>
+        <serialnumber>hardware_serial</serialnumber>
+        <platform>platform</platform>
+        <type>laptop</type>
+      </api_params>
+      <default_values>
+        <prefix>default value</prefix>
+        <type>laptop</type>
+      </default_values>
+      <itop_json_source>PcSource.json</itop_json_source>
+      <unique_identifier>name</unique_identifier>
+    </label>
+  </labels>
   <!-- Define the JSON parsing path to access the host data -->
-  <path>host</path>
+  <path>hosts</path>
+  <PCCollection>yes</PCCollection>
+  <collectors_launch_sequence type="array">
+    <collector>
+      <!-- PC Model -->
+      <name>FleetDMPCCollector</name>
+      <enable>yes</enable>
+      <rank>1</rank>
+    </collector>
+  </collectors_launch_sequence>
+
+  <FleetDMPCCollector>
+    <jsonurl>https://fdm.example.com/api/v1/fleet/labels/19/hosts</jsonurl>
+    <jsonpost>
+      <json_data>
+      </json_data>
+      <version>1.0</version>
+    </jsonpost>
+    <bearer_token>xxxxxxxxxxxxxxxxxxxxx</bearer_token>
+    <path>hosts</path>
+    <fields>
+      <primary_key>hostname</primary_key>      <!-- tag primary_key is mandatory -->
+      <name>computer_name</name>
+      <cpu>cpu_brand</cpu>
+      <ram>memory</ram>
+      <serialnumber>hardware_serial</serialnumber>
+      <org_id>org_id</org_id>
+      <brand_id>hardware_vendor</brand_id>
+      <osfamily_id>platform</osfamily_id>
+      <osversion_id>os_version</osversion_id>
+      <model_id>hardware_model</model_id>
+      <status>active</status>
+    </fields>
+    <defaults>      <!-- This part allow to specify default values for iTop Location field -->
+      <org_id>Example Pvt. Ltd</org_id>
+      <status>production</status>
+      <type>laptop</type>
+    </defaults>
+  </FleetDMPCCollector>
 
   <!-- Fields mapping between FleetDM JSON and iTop attributes -->
   <fields>
     <name_in_itop>hostname</name_in_itop>
-    <name_in_json>hostname</name_in_json>
-    
-    <name_in_itop>os_version</name_in_itop>
-    <name_in_json>os_version</name_in_json>
-
-    <name_in_itop>cpu_brand</name_in_itop>
-    <name_in_json>cpu_brand</name_in_json>
-
-    <name_in_itop>public_ip</name_in_itop>
-    <name_in_json>public_ip</name_in_json>
-
-    <!-- Add other fields as necessary based on your iTop and FleetDM data model -->
+    <os_version>os_version</os_version>
   </fields>
 
-  <!-- Defaults: Set static values for iTop attributes that don’t exist in FleetDM -->
-  <defaults>
-    <org_id>1</org_id> <!-- Example default organization ID -->
-    <status>production</status> <!-- Set default status -->
-  </defaults>
+  <json_placeholders type="hash">
+    <prefix>FleetDM</prefix>    <!--used for data synchro name and table name-->
+    <suffix></suffix>    <!--used for table name-->
+    <full_load_interval>240</full_load_interval>    <!-- 7 days (in seconds): 7*24*60*60 -->
+    <synchro_status>production</synchro_status>
+    <delete_policy>update</delete_policy>l
+    <delete_policy_update>status:obsolete</delete_policy_update>
+    <delete_policy_retention>0</delete_policy_retention>
+  </json_placeholders>
 </parameters>
