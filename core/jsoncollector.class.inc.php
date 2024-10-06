@@ -35,7 +35,6 @@ abstract class JsonCollector extends Collector
 	public function __construct()
 	{
 		parent::__construct();
-		$this->sFileJson = null;
 		$this->sURL = null;
 		$this->aJson = null;
 		$this->aFieldsKey = null;
@@ -128,15 +127,15 @@ abstract class JsonCollector extends Collector
 				$sBearerToken = isset($aParamsSourceJson["bearer_token"]) ? $aParamsSourceJson["bearer_token"] : null;
 				
 				// Fetch the data for the current label's URL using the bearer token (if provided)
-				$this->sFileJson = $this->fetchDataWithBearerToken($this->sURL, $sBearerToken);
+				$sFileJson = $this->fetchDataWithBearerToken($this->sURL, $sBearerToken);
 				// Check if data fetching was successful
-				if ($this->sFileJson === false) {
+				if ($sFileJson === false) {
 					Utils::Log(LOG_ERR, '[' . get_class($this) . '] Failed to get JSON file for label ID: ' . $labelId);
 					return false;
 				}
 
 				// Decode the fetched JSON
-				$aJson = json_decode($this->sFileJson, true);
+				$aJson = json_decode($sFileJson, true);
 				if ($aJson == null) {
 					Utils::Log(LOG_ERR, "[" . get_class($this) . "] Failed to parse JSON file for label ID: '" . $labelId . "'. Reason: " . json_last_error_msg());
 					return false;
@@ -159,7 +158,7 @@ abstract class JsonCollector extends Collector
 			Utils::Log(LOG_INFO, 'Synchro URL (target): '.Utils::GetConfigurationValue('itop_url', array()));
 
 		//verify the file
-		if ($this->sFileJson === false) {
+		if ($sFileJson === false) {
 			Utils::Log(LOG_ERR, '['.get_class($this).'] Failed to get JSON file: '.$this->sURL);
 
 			return false;
@@ -266,8 +265,7 @@ abstract class JsonCollector extends Collector
 	 * @throws \Exception
 	 */
 	private function SearchFieldValues($aData, $aTestOnlyFieldsKey = null) {
-		$aDataToSynchronize = [];
-	
+		$aDataToSynchronize = [];	
 		// Determine which fields to use
 		$aCurrentFieldKeys = (is_null($aTestOnlyFieldsKey)) ? $this->aFieldsKey : $aTestOnlyFieldsKey;
 		foreach ($aCurrentFieldKeys as $key => $sPath) {
@@ -282,7 +280,6 @@ abstract class JsonCollector extends Collector
 	
 			// Search for the value in the data
 			$aValue = $this->SearchValue($aJsonKeyPath, $aData);
-
 			if ($key == "brand_id") {
 				// Check if the brand exists in iTop
 				$brandExists = $this->checkBrandExists($aValue);
