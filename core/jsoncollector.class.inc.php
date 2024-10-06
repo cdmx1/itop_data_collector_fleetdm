@@ -17,20 +17,6 @@
 
 Orchestrator::AddRequirement('5.6.0'); // Minimum PHP version
 
-/**
- * Base class for creating collectors which retrieve their data via a JSON files
- *
- * The minimum implementation for such a collector consists in:
- * - creating a class derived from JSONCollector
- * - configuring parameters in tag <name_of_the_collector_class> with :
- * - <command> to configure a CLI command executed before reading JSON file
- * - <jsonfile> to configure a JSON file pat
- *      or <jsonurl> to give a JSON URL with post params in <jsonpost>
- * - <path> to configuring the path in the json file to take to find the data
- * by example aa/bb for {"aa":{"bb":{mydata},"cc":"xxx"}
- *      "*" will replace any tag aa/ * /bb  for {"aa":{cc":{"bb":{mydata1}},"dd":{"bb":{mydata2}}}
- *
- */
 abstract class JsonCollector extends Collector
 {
 	protected $sFileJson;
@@ -108,11 +94,11 @@ abstract class JsonCollector extends Collector
 
 		//get Json file
 			Utils::Log(LOG_DEBUG, 'Get params for uploading data file ');
-            $aDataGet = [];
+            $aDataGet = ['hosts' => []]; 
 			if (isset($aParamsSourceJson["jsonpost"])) {
 				$aDataGet = $aParamsSourceJson['jsonpost'];
 			} else {
-				$aDataGet = [];
+				$aDataGet = ['hosts' => []]; 
 			}
 			$iSynchroTimeout = (int)Utils::GetConfigurationValue('itop_synchro_timeout', 600); // timeout in seconds, for a synchro to run
 
@@ -129,14 +115,12 @@ abstract class JsonCollector extends Collector
 				Utils::Log(LOG_ERR, "[".get_class($this)."] No labels configured. Please provide label IDs in the configuration.");
 				return false;
 			}
-            
-			// Initialize the array to hold merged data from all labels
-			$aDataGet = [];
 
 			// Iterate over each label ID to build the full URL and fetch data
 			foreach ($labels as $label) {
 				// Ensure label is treated as a string
 				$labelId = (string)$label['fleet_dm_id']; 
+				$type = $label['api_params']['type']; 
 				$this->sURL = $sBaseUrl . $labelId . "/hosts";
 				Utils::Log(LOG_DEBUG, 'Fetching data for label ID: ' . $labelId);
 				
@@ -157,15 +141,18 @@ abstract class JsonCollector extends Collector
 					Utils::Log(LOG_ERR, "[" . get_class($this) . "] Failed to parse JSON file for label ID: '" . $labelId . "'. Reason: " . json_last_error_msg());
 					return false;
 				}
-
 				// Merge the fetched data into $aDataGet
-				if (!empty($aJson)) {
-					$aDataGet = array_merge($aDataGet, $aJson); // Merging fetched data into the main array
+				if (!isset($aDataGet['hosts']) || !is_array($aDataGet['hosts'])) {
+					$aDataGet['hosts'] = [];
 				}
-
+				if (!empty($aJson['hosts'])) {
+					foreach ($aJson['hosts'] as &$host) {
+						$host['type'] = $type;  // Set 'type' for each host
+					}
+					$aDataGet['hosts'] = array_merge($aDataGet['hosts'], $aJson['hosts']); // Merging fetched data into the main array
+				}
 				Utils::Log(LOG_DEBUG, "Data merged from label ID: " . $labelId);
 			}
-
 			// Log the final merged data
 			//Utils::Log(LOG_INFO, 'Final merged aDataGet: ' . json_encode($aDataGet));
 			
@@ -178,18 +165,16 @@ abstract class JsonCollector extends Collector
 			return false;
 		}
 		//**** step 3 : read json file
-		$this->aJson = json_decode($this->sFileJson, true);
-		Utils::Log(LOG_INFO, 'Final merged aDataGet: ' . json_encode($this->sFileJson));
+		Utils::Log(LOG_INFO, 'Final merged aDataGet: ' . json_encode($aDataGet));
+		$this->aJson = $aDataGet;
 		if ($this->aJson == null) {
 			Utils::Log(LOG_ERR, "[".get_class($this)."] Failed to translate data from JSON file: '".$this->sURL.$this->sFilePath."'. Reason: ".json_last_error_msg());
-
 			return false;
 		}
 
 		//Get table of Element in JSON file with a specific path
 		foreach ($aPath as $sTag) {
 			Utils::Log(LOG_DEBUG, "tag: ".$sTag);
-			//!array_key_exists(0, $this->aJson) => element $this->aJson is not a classic array It's an array with defined keys
 			if (!array_key_exists(0, $this->aJson) && $sTag != '*') {
 				$this->aJson = $this->aJson[$sTag];
 			} else {
