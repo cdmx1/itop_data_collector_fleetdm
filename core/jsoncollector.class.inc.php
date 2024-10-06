@@ -39,6 +39,7 @@ abstract class JsonCollector extends Collector
 		$this->aJson = null;
 		$this->aFieldsKey = null;
 		$this->iIdx = 0;
+		$this->configType = null;
 	}
 
 	/**
@@ -57,6 +58,8 @@ abstract class JsonCollector extends Collector
 
 		//**** step 1 : get all parameters from config file
 		$aParamsSourceJson = $this->aCollectorConfig;
+        $this->configType = $aParamsSourceJson['type'];
+		Utils::Log(LOG_INFO, "Collector Config Type: " . print_r($aParamsSourceJson['type'],true));
 		if (isset($aParamsSourceJson["command"])) {
 			$this->sJsonCliCommand = $aParamsSourceJson["command"];
 		}
@@ -107,9 +110,8 @@ abstract class JsonCollector extends Collector
 			$sBaseUrl = $jsonUrl . "/api/v1/fleet/labels/";
 			Utils::Log(LOG_INFO, "JSON URL from config: " . $sBaseUrl);
 
-			// Get the array of label IDs from the configuration
-			$labels = Utils::GetConfigurationValue('labels', '');
-
+			$labels = $aParamsSourceJson['labels'];
+			
 			if (empty($labels)) {
 				Utils::Log(LOG_ERR, "[".get_class($this)."] No labels configured. Please provide label IDs in the configuration.");
 				return false;
@@ -152,9 +154,6 @@ abstract class JsonCollector extends Collector
 				}
 				Utils::Log(LOG_DEBUG, "Data merged from label ID: " . $labelId);
 			}
-			// Log the final merged data
-			//Utils::Log(LOG_INFO, 'Final merged aDataGet: ' . json_encode($aDataGet));
-			
 			Utils::Log(LOG_INFO, 'Synchro URL (target): '.Utils::GetConfigurationValue('itop_url', array()));
 
 		//verify the file
@@ -164,7 +163,6 @@ abstract class JsonCollector extends Collector
 			return false;
 		}
 		//**** step 3 : read json file
-		Utils::Log(LOG_INFO, 'Final merged aDataGet: ' . json_encode($aDataGet));
 		$this->aJson = $aDataGet;
 		if ($this->aJson == null) {
 			Utils::Log(LOG_ERR, "[".get_class($this)."] Failed to translate data from JSON file: '".$this->sURL.$this->sFilePath."'. Reason: ".json_last_error_msg());

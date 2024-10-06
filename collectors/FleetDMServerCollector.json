@@ -121,18 +121,10 @@
 		},
 		{
 			"attcode": "managementip",
-			"update": "1",
+			"update": "0",
 			"reconcile": "0",
 			"update_policy": "master_locked",
 			"finalclass": "SynchroAttribute"
-		},
-		{
-			"attcode": "managementip_id",
-			"update": "1",
-			"reconcile": "0",
-			"update_policy": "master_locked",
-			"reconciliation_attcode": "friendlyname",
-			"finalclass": "SynchroAttExtKey"
 		},
 		{
 			"attcode": "model_id",
@@ -152,7 +144,7 @@
 		{
 			"attcode": "name",
 			"update": "1",
-			"reconcile": "0",
+			"reconcile": "1",
 			"update_policy": "master_locked",
 			"finalclass": "SynchroAttribute"
 		},
@@ -177,7 +169,7 @@
 		{
 			"attcode": "org_id",
 			"update": "1",
-			"reconcile": "1",
+			"reconcile": "0",
 			"update_policy": "master_locked",
 			"reconciliation_attcode": "name",
 			"finalclass": "SynchroAttExtKey"
@@ -188,14 +180,6 @@
 			"reconcile": "0",
 			"update_policy": "master_locked",
 			"reconciliation_attcode": "name",
-			"finalclass": "SynchroAttExtKey"
-		},
-		{
-			"attcode": "oslicence_id",
-			"update": "1",
-			"reconcile": "0",
-			"update_policy": "master_locked",
-			"reconciliation_attcode": "id",
 			"finalclass": "SynchroAttExtKey"
 		},
 		{
@@ -269,7 +253,7 @@
 		{
 			"attcode": "serialnumber",
 			"update": "1",
-			"reconcile": "1",
+			"reconcile": "0",
 			"update_policy": "master_locked",
 			"finalclass": "SynchroAttribute"
 		},
@@ -304,21 +288,21 @@
 		},
 		{
 			"attcode": "ocs_oscomment",
-			"update": "1",
+			"update": "0",
 			"reconcile": "0",
 			"update_policy": "master_locked",
 			"finalclass": "SynchroAttribute"
 		},
 		{
 			"attcode": "ocs_id",
-			"update": "1",
+			"update": "0",
 			"reconcile": "0",
 			"update_policy": "master_locked",
 			"finalclass": "SynchroAttribute"
 		},
 		{
 			"attcode": "cvss",
-			"update": "1",
+			"update": "0",
 			"reconcile": "0",
 			"update_policy": "master_locked",
 			"finalclass": "SynchroAttribute"

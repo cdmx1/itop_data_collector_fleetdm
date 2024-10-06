@@ -3,7 +3,7 @@
   <!-- iTop connection settings -->
   <itop_url>http://localhost</itop_url>  <!-- Update with the actual iTop URL -->
   <itop_login>admin</itop_login>  <!-- Update with actual iTop admin username -->
-  <itop_password>admin_password</itop_password>  <!-- Update with the actual iTop password -->
+  <itop_password>xxxxxxx</itop_password>  <!-- Update with the actual iTop password -->
 
   <!-- Optional: Token-based authentication -->
   <itop_token></itop_token>
@@ -38,46 +38,6 @@
   <synchro_user>admin</synchro_user>
   <!-- Date format in collected data -->
   <date_format>Y-m-d</date_format>
-  <labels type="array">
-    <label>
-      <name>PC</name>
-      <fleet_dm_id>19</fleet_dm_id>
-      <api_params>
-        <computer_name>computer_name</computer_name>
-        <cpu_type>cpu_brand</cpu_type>
-        <brand>hardware_vendor</brand>
-        <ram>memory</ram>
-        <serialnumber>hardware_serial</serialnumber>
-        <platform>platform</platform>
-        <type>desktop</type>
-      </api_params>
-      <default_values>
-        <prefix>default value</prefix>
-        <type>desktop</type>
-      </default_values>
-      <itop_json_source>PcSource.json</itop_json_source>
-      <unique_identifier>name</unique_identifier>
-    </label>
-    <label>
-      <name>PC</name>
-      <fleet_dm_id>21</fleet_dm_id>
-      <api_params>
-        <computer_name>computer_name</computer_name>
-        <cpu_type>cpu_brand</cpu_type>
-        <brand>hardware_vendor</brand>
-        <ram>memory</ram>
-        <serialnumber>hardware_serial</serialnumber>
-        <platform>platform</platform>
-        <type>laptop</type>
-      </api_params>
-      <default_values>
-        <prefix>default value</prefix>
-        <type>laptop</type>
-      </default_values>
-      <itop_json_source>PcSource.json</itop_json_source>
-      <unique_identifier>name</unique_identifier>
-    </label>
-  </labels>
   <!-- Define the JSON parsing path to access the host data -->
   <path>hosts</path>
   <PCCollection>yes</PCCollection>
@@ -88,20 +48,106 @@
       <enable>yes</enable>
       <rank>1</rank>
     </collector>
+    <collector>
+      <!-- Server Model -->
+      <name>FleetDMServerCollector</name>
+      <enable>yes</enable>
+      <rank>1</rank>
+    </collector>
   </collectors_launch_sequence>
-
-  <jsonurl>https://fdm.example.com</jsonurl>
+  <jsonurl>https://fdm.xxxx.io</jsonurl>
   <FleetDMPCCollector>
+    <type>pc</type>
+    <labels type="array">
+      <label>
+        <name>PC</name>
+        <fleet_dm_id>19</fleet_dm_id>
+        <api_params>
+          <computer_name>computer_name</computer_name>
+          <cpu_type>cpu_brand</cpu_type>
+          <brand>hardware_vendor</brand>
+          <ram>memory</ram>
+          <serialnumber>hardware_serial</serialnumber>
+          <platform>platform</platform>
+          <type>desktop</type>
+        </api_params>
+        <default_values>
+          <prefix>default value</prefix>
+          <type>desktop</type>
+        </default_values>
+      </label>
+      <label>
+        <name>PC</name>
+        <fleet_dm_id>21</fleet_dm_id>
+        <api_params>
+          <computer_name>computer_name</computer_name>
+          <cpu_type>cpu_brand</cpu_type>
+          <brand>hardware_vendor</brand>
+          <ram>memory</ram>
+          <serialnumber>hardware_serial</serialnumber>
+          <platform>platform</platform>
+          <type>laptop</type>
+        </api_params>
+        <default_values>
+          <prefix>default value</prefix>
+          <type>laptop</type>
+        </default_values>
+      </label>
+    </labels>
     <jsonpost>
       <json_data>
       </json_data>
       <version>1.0</version>
     </jsonpost>
-    <bearer_token>xxxxxxxxxxxxxxxxxxxxx</bearer_token>
+    <bearer_token>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</bearer_token>
     <path>hosts</path>
     <fields>
       <primary_key>hostname</primary_key>      <!-- tag primary_key is mandatory -->
       <name>computer_name</name>
+      <type>type</type>
+      <cpu>cpu_brand</cpu>
+      <ram>memory</ram>
+      <serialnumber>hardware_serial</serialnumber>
+      <org_id>org_id</org_id>
+      <brand_id>hardware_vendor</brand_id>
+      <osfamily_id>platform</osfamily_id>
+      <osversion_id>os_version</osversion_id>
+      <model_id>hardware_model</model_id>
+      <status>active</status>
+    </fields>
+    <defaults>      <!-- This part allow to specify default values for iTop Location field -->
+      <org_id>CodeMax IT Solutions Pvt. Ltd</org_id>
+      <status>production</status>
+      <type>laptop</type>
+    </defaults>
+  </FleetDMPCCollector>
+  <FleetDMServerCollector>
+    <type>server</type>
+    <labels type="array">
+      <label>
+        <name>Server</name>
+        <fleet_dm_id>24</fleet_dm_id>
+        <api_params>
+          <computer_name>computer_name</computer_name>
+          <cpu_type>cpu_brand</cpu_type>
+          <brand>hardware_vendor</brand>
+          <ram>memory</ram>
+          <serialnumber>hardware_serial</serialnumber>
+          <platform>platform</platform>
+        </api_params>
+      </label>
+    </labels>
+    <jsonpost>
+      <json_data>
+      </json_data>
+      <version>1.0</version>
+    </jsonpost>
+    <bearer_token>xxxxxxxxxxxxxxxxxxxxxx</bearer_token>
+    <path>hosts</path>
+    <fields>
+      <primary_key>hostname</primary_key>      <!-- tag primary_key is mandatory -->
+      <name>computer_name</name>
+      <type>type</type>
       <cpu>cpu_brand</cpu>
       <ram>memory</ram>
       <serialnumber>hardware_serial</serialnumber>
@@ -117,13 +163,7 @@
       <status>production</status>
       <type>laptop</type>
     </defaults>
-  </FleetDMPCCollector>
-
-  <!-- Fields mapping between FleetDM JSON and iTop attributes -->
-  <fields>
-    <name_in_itop>hostname</name_in_itop>
-    <os_version>os_version</os_version>
-  </fields>
+  </FleetDMServerCollector>
 
   <json_placeholders type="hash">
     <prefix>FleetDM</prefix>    <!--used for data synchro name and table name-->
