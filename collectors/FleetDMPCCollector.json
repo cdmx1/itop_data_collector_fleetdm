@@ -116,9 +116,16 @@
 			"finalclass": "SynchroAttribute"
 		},
 		{
-			"attcode": "name",
+			"attcode": "fleet_uuid",
 			"update": "1",
 			"reconcile": "1",
+			"update_policy": "master_locked",
+			"finalclass": "SynchroAttribute"
+		},
+		{
+			"attcode": "name",
+			"update": "1",
+			"reconcile": "0",
 			"update_policy": "master_locked",
 			"finalclass": "SynchroAttribute"
 		},

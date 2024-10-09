@@ -3,7 +3,7 @@
   <!-- iTop connection settings -->
   <itop_url>http://localhost</itop_url>  <!-- Update with the actual iTop URL -->
   <itop_login>admin</itop_login>  <!-- Update with actual iTop admin username -->
-  <itop_password>xxxxxxx</itop_password>  <!-- Update with the actual iTop password -->
+  <itop_password>xxxxxxxx</itop_password>  <!-- Update with the actual iTop password -->
 
   <!-- Optional: Token-based authentication -->
   <itop_token></itop_token>
@@ -55,7 +55,7 @@
       <rank>1</rank>
     </collector>
   </collectors_launch_sequence>
-  <jsonurl>https://fdm.xxxx.io</jsonurl>
+  <jsonurl>https://fdm.xxx.io</jsonurl>
   <FleetDMPCCollector>
     <type>pc</type>
     <labels type="array">
@@ -99,10 +99,11 @@
       </json_data>
       <version>1.0</version>
     </jsonpost>
-    <bearer_token>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</bearer_token>
+    <bearer_token>xxxxxxxxxxxxx</bearer_token>
     <path>hosts</path>
     <fields>
-      <primary_key>hostname</primary_key>      <!-- tag primary_key is mandatory -->
+      <primary_key>uuid</primary_key>   
+      <fleet_uuid>uuid</fleet_uuid>
       <name>computer_name</name>
       <type>type</type>
       <cpu>cpu_brand</cpu>
@@ -116,7 +117,7 @@
       <status>active</status>
     </fields>
     <defaults>      <!-- This part allow to specify default values for iTop Location field -->
-      <org_id>CodeMax IT Solutions Pvt. Ltd</org_id>
+      <org_id>Example Pvt. Ltd</org_id>
       <status>production</status>
       <type>laptop</type>
     </defaults>
@@ -130,6 +131,7 @@
         <api_params>
           <computer_name>computer_name</computer_name>
           <cpu_type>cpu_brand</cpu_type>
+          <type>type</type>
           <brand>hardware_vendor</brand>
           <ram>memory</ram>
           <serialnumber>hardware_serial</serialnumber>
@@ -142,10 +144,11 @@
       </json_data>
       <version>1.0</version>
     </jsonpost>
-    <bearer_token>xxxxxxxxxxxxxxxxxxxxxx</bearer_token>
+    <bearer_token>xxxxxxxxxxxxx</bearer_token>
     <path>hosts</path>
     <fields>
-      <primary_key>hostname</primary_key>      <!-- tag primary_key is mandatory -->
+      <primary_key>uuid</primary_key>   
+      <fleet_uuid>uuid</fleet_uuid>
       <name>computer_name</name>
       <type>type</type>
       <cpu>cpu_brand</cpu>
