@@ -263,7 +263,8 @@ abstract class JsonCollector extends Collector
 	 * @throws \Exception
 	 */
 	private function SearchFieldValues($aData, $aTestOnlyFieldsKey = null) {
-		$aDataToSynchronize = [];	
+		$aDataToSynchronize = [];
+		$brandData = [];
 		// Determine which fields to use
 		$aCurrentFieldKeys = (is_null($aTestOnlyFieldsKey)) ? $this->aFieldsKey : $aTestOnlyFieldsKey;
 		foreach ($aCurrentFieldKeys as $key => $sPath) {
@@ -278,35 +279,56 @@ abstract class JsonCollector extends Collector
 	
 			// Search for the value in the data
 			$aValue = $this->SearchValue($aJsonKeyPath, $aData);
-			if ($key == "brand_id") {
+			if ($key == "brand_id") { 
 				// Check if the brand exists in iTop
-				$brandExists = $this->checkBrandExists($aValue);
-				if (!$brandExists) {
+				$brandResult = $this->checkBrandExists($aValue);
+				if (!$brandResult) {
 					// If not found, create the brand
 					$createResponse = $this->createBrand($aValue);
 					if ($createResponse['code'] != 0) {
 						Utils::Log(LOG_ERR, "Failed to create brand: {$createResponse['message']}");
 					} else {
 						Utils::Log(LOG_INFO, "Brand created successfully with ID: {$createResponse['id']}");
+						$brandData['brand_id'] = $createResponse['id']; // Set the new brand ID
 					}
 				} else {
-					Utils::Log(LOG_INFO, "Brand already exists with ID: $aValue");
+					// Brand exists, set the brand ID from the returned brandResult
+					$brandId = $brandResult->brandId;
+					Utils::Log(LOG_INFO, "Brand already exists with ID: $brandId");
+					$brandData['brand_id'] = $brandId; // Set the existing brand ID
 				}
 			}
 			if (empty($aValue) && array_key_exists($key, $this->aSynchroFieldsToDefaultValues)) {
-				// Use default value if field is empty
-				$sDefaultValue = $this->aSynchroFieldsToDefaultValues[$key];
-				Utils::Log(LOG_INFO, "Using default value for $key: $sDefaultValue");
-				$aDataToSynchronize[$key] = $sDefaultValue;
-			} else if (!is_null($aValue)) {
-				// Log the actual value found
-				Utils::Log(LOG_INFO, "Found value for $key: " . print_r($aValue, true));
-				$aDataToSynchronize[$key] = $aValue;
+					// Use default value if field is empty
+					$sDefaultValue = $this->aSynchroFieldsToDefaultValues[$key];
+					Utils::Log(LOG_INFO, "Using default value for $key: $sDefaultValue");
+					$aDataToSynchronize[$key] = $sDefaultValue;
+				} else if (!is_null($aValue)) {
+					// Log the actual value found
+					Utils::Log(LOG_INFO, "Found value for $key: " . print_r($aValue, true));
+					$aDataToSynchronize[$key] = $aValue;
+				}
 			}
-		}
+		$brandId = $brandData['brand_id'];
+		$modalId = $aDataToSynchronize['model_id'];
 		$osFamilyId = $aDataToSynchronize['osfamily_id'];
 		$osVersionId = $aDataToSynchronize['osversion_id'];
 
+		// Check if the model exists in iTop
+		$oResultModelExists = $this->checkModelExists($modalId, $brandId, 'PC');
+		if (!$oResultModelExists) {
+			// If not found, create the model
+			$createResponse = $this->createModel($modalId, $brandId, 'PC');
+			if ($createResponse['code'] != 0) {
+				Utils::Log(LOG_ERR, "Failed to create model: {$createResponse['message']}");
+			} else {
+				Utils::Log(LOG_INFO, "Model created successfully with ID: {$createResponse['id']}");
+				$aDataToSynchronize['model_id'] = $createResponse['id'];
+			}
+		} else {
+			Utils::Log(LOG_INFO, "Model already exists with ID: {$oResultModelExists->modelId}");
+			$aDataToSynchronize['model_id'] = $oResultModelExists->modelId;
+		}
 		// Step 1: Check if the OS Family exists
 		if (!$this->checkOsFamilyExists($osFamilyId)) {
 			// OS Family does not exist, create it
@@ -337,12 +359,27 @@ abstract class JsonCollector extends Collector
 	private function checkBrandExists($brandName) {
 		// Use the RestClient to search for the brand by name
 		$restClient = new RestClient();
+		
 		// Prepare a search query to find the brand by its name
 		$query = sprintf("SELECT Brand WHERE name='%s'", addslashes($brandName));
+		
 		// Perform the search
 		$result = $restClient->Get('Brand', $query);
-		// Assuming code 0 means success and we have results
-		return $result['code'] == 0 && !empty($result['objects']);
+		
+		// Check if the search was successful
+		if ($result['code'] != 0 || empty($result['objects'])) {
+			Utils::Log(LOG_INFO, "Brand '$brandName' not found or error in search.");
+			return false;
+		}
+		
+		// Extract the brand ID
+		$brandId = $result['objects'][array_key_first($result['objects'])]['key'] ?? null;
+		Utils::Log(LOG_INFO, "Brand found with ID: " . print_r($brandId, true));
+		// Return an object with the result and brand ID
+		return (object) [
+			'result' => $result,
+			'brandId' => $brandId
+		];
 	}
 	private function createBrand($brandId) {
 		$restClient = new RestClient();
@@ -350,6 +387,51 @@ abstract class JsonCollector extends Collector
 			'name' => $brandId
 		];
 		return $restClient->Create('Brand', $validAttributes, 'Created brand from synchronization process');
+	}
+	private function checkModelExists($modelName, $brandId, $deviceType) {
+		// Use the RestClient to search for the model by name, brandId, and deviceType
+		$restClient = new RestClient();
+		
+		// Prepare a search query to find the model by name, brandId, and deviceType
+		$query = sprintf(
+			"SELECT Model WHERE name='%s' AND brand_id='%s' AND type='%s'",
+			addslashes($modelName),
+			addslashes($brandId),
+			addslashes($deviceType)
+		);
+		
+		// Perform the search
+		$result = $restClient->Get('Model', $query);
+		
+		// Check if the search was successful
+		if ($result['code'] != 0 || empty($result['objects'])) {
+			Utils::Log(LOG_INFO, "Model '$modelName' with brand ID '$brandId' and device type '$deviceType' not found or error in search.");
+			return false;
+		}
+	
+		// Extract the model ID
+		$modelId = $result['objects'][array_key_first($result['objects'])]['key'] ?? null;
+		Utils::Log(LOG_INFO, "Model found with ID: " . print_r($modelId, true));
+	
+		// Return an object with the result and model ID
+		return (object) [
+			'result' => $result,
+			'modelId' => $modelId
+		];
+	}
+	
+	private function createModel($modelName, $brandId, $deviceType) {
+		$restClient = new RestClient();
+		
+		// Prepare the attributes including modelName, brandId, and deviceType
+		$validAttributes = [
+			'name' => $modelName,
+			'brand_id' => $brandId,
+			'type' => $deviceType
+		];
+		
+		// Create the model in iTop
+		return $restClient->Create('Model', $validAttributes, 'Created model from synchronization process');
 	}
 	private function createOsFamily($osFamilyId) {
 		// Initialize the RestClient
