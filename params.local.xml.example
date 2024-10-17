@@ -71,10 +71,6 @@
           <platform>platform</platform>
           <type>desktop</type>
         </api_params>
-        <default_values>
-          <prefix>default value</prefix>
-          <type>desktop</type>
-        </default_values>
       </label>
       <label>
         <name>PC</name>
@@ -88,10 +84,6 @@
           <platform>platform</platform>
           <type>laptop</type>
         </api_params>
-        <default_values>
-          <prefix>default value</prefix>
-          <type>laptop</type>
-        </default_values>
       </label>
     </labels>
     <jsonpost>
@@ -99,7 +91,7 @@
       </json_data>
       <version>1.0</version>
     </jsonpost>
-    <bearer_token>xxxxxxxxxxxxx</bearer_token>
+    <bearer_token>xxxxx</bearer_token>
     <path>hosts</path>
     <fields>
       <primary_key>uuid</primary_key>   
@@ -111,9 +103,9 @@
       <serialnumber>hardware_serial</serialnumber>
       <org_id>org_id</org_id>
       <brand_id>hardware_vendor</brand_id>
+      <model_id>hardware_model</model_id>
       <osfamily_id>platform</osfamily_id>
       <osversion_id>os_version</osversion_id>
-      <model_id>hardware_model</model_id>
       <status>active</status>
     </fields>
     <defaults>      <!-- This part allow to specify default values for iTop Location field -->
@@ -131,7 +123,7 @@
         <api_params>
           <computer_name>computer_name</computer_name>
           <cpu_type>cpu_brand</cpu_type>
-          <type>type</type>
+          <type>server</type>
           <brand>hardware_vendor</brand>
           <ram>memory</ram>
           <serialnumber>hardware_serial</serialnumber>
@@ -144,7 +136,7 @@
       </json_data>
       <version>1.0</version>
     </jsonpost>
-    <bearer_token>xxxxxxxxxxxxx</bearer_token>
+    <bearer_token>xxxxx</bearer_token>
     <path>hosts</path>
     <fields>
       <primary_key>uuid</primary_key>   
@@ -156,13 +148,13 @@
       <serialnumber>hardware_serial</serialnumber>
       <org_id>org_id</org_id>
       <brand_id>hardware_vendor</brand_id>
+      <model_id>hardware_model</model_id>
       <osfamily_id>platform</osfamily_id>
       <osversion_id>os_version</osversion_id>
-      <model_id>hardware_model</model_id>
       <status>active</status>
     </fields>
     <defaults>      <!-- This part allow to specify default values for iTop Location field -->
-      <org_id>Example Pvt. Ltd</org_id>
+      <org_id>CodeMax IT Solutions Pvt. Ltd</org_id>
       <status>production</status>
       <type>laptop</type>
     </defaults>

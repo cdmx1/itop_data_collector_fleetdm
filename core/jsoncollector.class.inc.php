@@ -123,8 +123,7 @@ abstract class JsonCollector extends Collector
 				$labelId = (string)$label['fleet_dm_id']; 
 				$type = $label['api_params']['type']; 
 				$this->sURL = $sBaseUrl . $labelId . "/hosts";
-				Utils::Log(LOG_DEBUG, 'Fetching data for label ID: ' . $labelId);
-				
+			
 				$iSynchroTimeout = (int) Utils::GetConfigurationValue('itop_synchro_timeout', 600); // timeout in seconds, for a synchro to run
 				$sBearerToken = isset($aParamsSourceJson["bearer_token"]) ? $aParamsSourceJson["bearer_token"] : null;
 				
@@ -272,7 +271,6 @@ abstract class JsonCollector extends Collector
 				// Log key and index position
 				Utils::Log(LOG_INFO, "Processing key: $key with index: " . array_search($key, $aCurrentFieldKeys));
 			}
-	
 			// Log the JSON key path
 			$aJsonKeyPath = explode('/', $sPath);
 			Utils::Log(LOG_INFO, "Searching for value in path: " . implode(' -> ', $aJsonKeyPath));
@@ -313,12 +311,20 @@ abstract class JsonCollector extends Collector
 		$modalId = $aDataToSynchronize['model_id'];
 		$osFamilyId = $aDataToSynchronize['osfamily_id'];
 		$osVersionId = $aDataToSynchronize['osversion_id'];
-
+		$type = $aDataToSynchronize['type'];
+		Utils::Log(LOG_INFO, "Found value for $key: " . print_r($aValue, true));
+        if ($type === 'desktop' || $type === 'laptop') {
+			$otype = 'PC';
+		} elseif ($type === 'server') {
+			$otype = 'Server';
+		} else {
+			$otype = '';
+		}
 		// Check if the model exists in iTop
-		$oResultModelExists = $this->checkModelExists($modalId, $brandId, 'PC');
+		$oResultModelExists = $this->checkModelExists($modalId, $brandId, $otype);
 		if (!$oResultModelExists) {
 			// If not found, create the model
-			$createResponse = $this->createModel($modalId, $brandId, 'PC');
+			$createResponse = $this->createModel($modalId, $brandId, $otype);
 			if ($createResponse['code'] != 0) {
 				Utils::Log(LOG_ERR, "Failed to create model: {$createResponse['message']}");
 			} else {
@@ -574,9 +580,6 @@ abstract class JsonCollector extends Collector
 
 	private function fetchDataWithBearerToken($url, $bearerToken)
 	{
-		// Define your Bearer token inside the function
-		$bearerToken = Utils::GetConfigurationValue('jsonpost', '')['api_token'];
-
 		// Initialize cURL
 		$ch = curl_init($url);
 
