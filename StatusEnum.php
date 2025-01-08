@@ -1,5 +1,6 @@
 <?php
+
 enum StatusEnum: string
 {
-    case online  = 'production';
+    case online = 'production';
 }

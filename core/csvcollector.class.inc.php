@@ -16,7 +16,7 @@
 //   along with this application. If not, see <http://www.gnu.org/licenses/>
 
 /**
- * Base class for creating collectors which retrieve their data via a CSV files
+ * Base class for creating collectors which retrieve their data via a CSV files.
  *
  * The minimum implementation for such a collector consists in:
  * - creating a class derived from CSVCollector
@@ -27,33 +27,33 @@
 abstract class CSVCollector extends Collector
 {
     protected $iIdx = 0;
-    protected $aCsvFieldsPerLine = array();
+    protected $aCsvFieldsPerLine = [];
     protected $sCsvSeparator;
     protected $sCsvEncoding;
     protected $bHasHeader = true;
     protected $sCsvCliCommand;
     /**
-     * @var   array<int, string[]>  Table of number of columns in input csv file corresponding to output fields or input columns names (if the specification never mention the input column)
-     * [0 => [synchro_field1, synchro_field2], 1 => [synchro_field3], 2 => [col_name]]
+     * @var array<int, string[]> Table of number of columns in input csv file corresponding to output fields or input columns names (if the specification never mention the input column)
+     *                           [0 => [synchro_field1, synchro_field2], 1 => [synchro_field3], 2 => [col_name]]
      */
     protected $aMappingCsvColumnIndexToFields;
-    protected $aSynchroFieldsToDefaultValues = array();
+    protected $aSynchroFieldsToDefaultValues = [];
     protected $aConfiguredHeaderColumns;
     /**
-     * @var array<string, string[]>  Mapping of csv columns to synchro fields
-     * [column_name => [synchro_field1, synchro_field2], column_name2 => [synchro_field3]]
+     * @var array<string, string[]> Mapping of csv columns to synchro fields
+     *                              [column_name => [synchro_field1, synchro_field2], column_name2 => [synchro_field3]]
      */
-    protected $aMappingCsvColumnNameToFields = array();
+    protected $aMappingCsvColumnNameToFields = [];
     /**
-     * @var array<string, string>  Table of all synchronised fields
-     * [synchro_field => '', synchro_field2 => '']
+     * @var array<string, string> Table of all synchronised fields
+     *                            [synchro_field => '', synchro_field2 => '']
      */
-    protected $aMappedFields = array();
-    protected $aIgnoredCsvColumns = array();
-    protected $aIgnoredSynchroFields = array();
+    protected $aMappedFields = [];
+    protected $aIgnoredCsvColumns = [];
+    protected $aIgnoredSynchroFields = [];
 
     /**
-     * Initalization
+     * Initalization.
      *
      * @throws Exception
      */
@@ -63,9 +63,10 @@ abstract class CSVCollector extends Collector
     }
 
     /**
-     * Parses configured csv file to fetch data
+     * Parses configured csv file to fetch data.
      *
      * @see Collector::Prepare()
+     *
      * @throws Exception
      */
     public function Prepare()
@@ -75,7 +76,7 @@ abstract class CSVCollector extends Collector
         $this->sCsvSeparator = ';';
         $this->sCsvEncoding = 'UTF-8';
         $this->sCsvCliCommand = '';
-        $this->aSynchroFieldsToDefaultValues = array();
+        $this->aSynchroFieldsToDefaultValues = [];
         $this->bHasHeader = true;
 
         if (is_array($this->aCollectorConfig)) {
@@ -85,7 +86,7 @@ abstract class CSVCollector extends Collector
 
             if (array_key_exists('separator', $this->aCollectorConfig)) {
                 $this->sCsvSeparator = $this->aCollectorConfig['separator'];
-                if ($this->sCsvSeparator === 'TAB') {
+                if ('TAB' === $this->sCsvSeparator) {
                     $this->sCsvSeparator = "\t";
                 }
             }
@@ -96,17 +97,16 @@ abstract class CSVCollector extends Collector
                 $this->sCsvCliCommand = $this->aCollectorConfig['command'];
             }
             if (array_key_exists('has_header', $this->aCollectorConfig)) {
-                $this->bHasHeader = ($this->aCollectorConfig['has_header'] !== 'no');
+                $this->bHasHeader = ('no' !== $this->aCollectorConfig['has_header']);
             }
 
-
             if (array_key_exists('defaults', $this->aCollectorConfig)) {
-                if ($this->aCollectorConfig['defaults'] !== '') {
+                if ('' !== $this->aCollectorConfig['defaults']) {
                     $this->aSynchroFieldsToDefaultValues = $this->aCollectorConfig['defaults'];
                     if (!is_array($this->aSynchroFieldsToDefaultValues)) {
                         Utils::Log(
                             LOG_ERR,
-                            "[" . get_class($this) . "] defaults section configuration is not correct. please see documentation."
+                            '['.get_class($this).'] defaults section configuration is not correct. please see documentation.'
                         );
 
                         return false;
@@ -115,11 +115,11 @@ abstract class CSVCollector extends Collector
             }
 
             if (array_key_exists('ignored_columns', $this->aCollectorConfig)) {
-                if ($this->aCollectorConfig['ignored_columns'] !== '') {
+                if ('' !== $this->aCollectorConfig['ignored_columns']) {
                     if (!is_array($this->aCollectorConfig['ignored_columns'])) {
                         Utils::Log(
                             LOG_ERR,
-                            "[" . get_class($this) . "] ignored_columns section configuration is not correct. please see documentation."
+                            '['.get_class($this).'] ignored_columns section configuration is not correct. please see documentation.'
                         );
 
                         return false;
@@ -129,12 +129,12 @@ abstract class CSVCollector extends Collector
             }
 
             if (array_key_exists('fields', $this->aCollectorConfig)) {
-                if ($this->aCollectorConfig['fields'] !== '') {
+                if ('' !== $this->aCollectorConfig['fields']) {
                     $aCurrentConfiguredHeaderColumns = $this->aCollectorConfig['fields'];
                     if (!is_array($aCurrentConfiguredHeaderColumns)) {
                         Utils::Log(
                             LOG_ERR,
-                            "[" . get_class($this) . "] fields section configuration is not correct. please see documentation."
+                            '['.get_class($this).'] fields section configuration is not correct. please see documentation.'
                         );
 
                         return false;
@@ -153,51 +153,51 @@ abstract class CSVCollector extends Collector
             }
         }
 
-        if ($sCsvFilePath === '') {
+        if ('' === $sCsvFilePath) {
             // No query at all !!
             Utils::Log(
                 LOG_ERR,
-                "[" . get_class($this) . "] no CSV file configured! Cannot collect data. The csv was expected to be configured as '" . strtolower(get_class($this)) . "_csv' in the configuration file."
+                '['.get_class($this)."] no CSV file configured! Cannot collect data. The csv was expected to be configured as '".strtolower(get_class($this))."_csv' in the configuration file."
             );
 
             return false;
         }
 
-        Utils::Log(LOG_INFO, "[" . get_class($this) . "] CSV file is [" . $sCsvFilePath . "]");
-        Utils::Log(LOG_DEBUG, "[" . get_class($this) . "] Has cs header [" . $this->bHasHeader . "]");
-        Utils::Log(LOG_DEBUG, "[" . get_class($this) . "] Separator used is [" . $this->sCsvSeparator . "]");
-        Utils::Log(LOG_DEBUG, "[" . get_class($this) . "] Encoding used is [" . $this->sCsvEncoding . "]");
-        Utils::Log(LOG_DEBUG, "[" . get_class($this) . "] Fields [" . var_export($this->aConfiguredHeaderColumns, true) . "]");
-        Utils::Log(LOG_DEBUG, "[" . get_class($this) . "] Ignored csv fields [" . var_export($this->aIgnoredCsvColumns, true) . "]");
-        Utils::Log(LOG_DEBUG, "[" . get_class($this) . "] Default values [" . var_export($this->aSynchroFieldsToDefaultValues, true) . "]");
+        Utils::Log(LOG_INFO, '['.get_class($this).'] CSV file is ['.$sCsvFilePath.']');
+        Utils::Log(LOG_DEBUG, '['.get_class($this).'] Has cs header ['.$this->bHasHeader.']');
+        Utils::Log(LOG_DEBUG, '['.get_class($this).'] Separator used is ['.$this->sCsvSeparator.']');
+        Utils::Log(LOG_DEBUG, '['.get_class($this).'] Encoding used is ['.$this->sCsvEncoding.']');
+        Utils::Log(LOG_DEBUG, '['.get_class($this).'] Fields ['.var_export($this->aConfiguredHeaderColumns, true).']');
+        Utils::Log(LOG_DEBUG, '['.get_class($this).'] Ignored csv fields ['.var_export($this->aIgnoredCsvColumns, true).']');
+        Utils::Log(LOG_DEBUG, '['.get_class($this).'] Default values ['.var_export($this->aSynchroFieldsToDefaultValues, true).']');
 
         if (!empty($this->sCsvCliCommand)) {
             utils::Exec($this->sCsvCliCommand);
         }
 
         try {
-            $hHandle = fopen($sCsvFilePath, "r");
+            $hHandle = fopen($sCsvFilePath, 'r');
         } catch (Exception $e) {
-            Utils::Log(LOG_INFO, "[" . get_class($this) . "] Cannot open CSV file $sCsvFilePath");
-            $sCsvFilePath = APPROOT . $sCsvFilePath;
+            Utils::Log(LOG_INFO, '['.get_class($this)."] Cannot open CSV file $sCsvFilePath");
+            $sCsvFilePath = APPROOT.$sCsvFilePath;
             try {
-                $hHandle = fopen($sCsvFilePath, "r");
+                $hHandle = fopen($sCsvFilePath, 'r');
             } catch (Exception $e) {
-                Utils::Log(LOG_ERR, "[" . get_class($this) . "] Cannot open CSV file $sCsvFilePath");
+                Utils::Log(LOG_ERR, '['.get_class($this)."] Cannot open CSV file $sCsvFilePath");
 
                 return false;
             }
         }
 
         if (!$hHandle) {
-            Utils::Log(LOG_ERR, "[" . get_class($this) . "] Cannot use CSV file handle for $sCsvFilePath");
+            Utils::Log(LOG_ERR, '['.get_class($this)."] Cannot use CSV file handle for $sCsvFilePath");
 
             return false;
         }
 
-        $sTmpFile = tempnam(sys_get_temp_dir(), "decoded_");
+        $sTmpFile = tempnam(sys_get_temp_dir(), 'decoded_');
         file_put_contents($sTmpFile, iconv($this->sCsvEncoding, $this->GetCharset(), stream_get_contents($hHandle)));
-        $oTmpHandle = fopen($sTmpFile, "r");
+        $oTmpHandle = fopen($sTmpFile, 'r');
 
         while (($aData = fgetcsv($oTmpHandle, 0, $this->sCsvSeparator)) !== false) {
             $this->aCsvFieldsPerLine[] = $aData;
@@ -222,21 +222,21 @@ abstract class CSVCollector extends Collector
 
     /**
      * Fetches one csv row at a time
-     * The first row is used to check if the columns of the result match the expected "fields"
+     * The first row is used to check if the columns of the result match the expected "fields".
      *
      * @see Collector::Fetch()
+     *
      * @throws Exception
      */
     public function Fetch()
     {
         $iCount = count($this->aCsvFieldsPerLine);
-        if (($iCount == 0) || (($iCount == 1) && $this->bHasHeader)) {
-            Utils::Log(LOG_ERR, "[" . get_class($this) . "] CSV file is empty. Data collection stops here.");
+        if ((0 == $iCount) || ((1 == $iCount) && $this->bHasHeader)) {
+            Utils::Log(LOG_ERR, '['.get_class($this).'] CSV file is empty. Data collection stops here.');
 
             return false;
         }
         if ($this->iIdx >= $iCount) {
-
             return false;
         }
 
@@ -250,7 +250,7 @@ abstract class CSVCollector extends Collector
             $this->CheckColumns($this->aMappedFields, [], 'csv file');
 
             if ($this->bHasHeader) {
-                $this->iIdx++;
+                ++$this->iIdx;
                 /** NextLineObject**/
                 $oNextLineArr = $this->getNextLine();
             }
@@ -262,12 +262,12 @@ abstract class CSVCollector extends Collector
             $line = $this->iIdx + 1;
             Utils::Log(
                 LOG_ERR,
-                "[" . get_class($this) . "] Wrong number of columns ($iLineSize) on line $line (expected $iColumnSize columns just like in header): " . $oNextLineArr->getCsvLine()
+                '['.get_class($this)."] Wrong number of columns ($iLineSize) on line $line (expected $iColumnSize columns just like in header): ".$oNextLineArr->getCsvLine()
             );
-            throw new Exception("Invalid CSV file.");
+            throw new Exception('Invalid CSV file.');
         }
 
-        $aData = array();
+        $aData = [];
 
         foreach ($oNextLineArr->getValues() as $i => $sVal) {
             $aSynchroFields = $this->aMappingCsvColumnIndexToFields[$i];
@@ -292,14 +292,11 @@ abstract class CSVCollector extends Collector
             }
         }
 
-        $this->iIdx++;
+        ++$this->iIdx;
 
         return $aData;
     }
 
-    /**
-     * @param $aCsvHeaderColumns
-     */
     protected function Configure($aCsvHeaderColumns)
     {
         if ($this->bHasHeader) {
@@ -307,7 +304,7 @@ abstract class CSVCollector extends Collector
 
             foreach ($aCsvHeaderColumns as $sCsvColumn) {
                 if (array_key_exists($sCsvColumn, $this->aMappingCsvColumnNameToFields)) {
-                    //use mapping instead of csv header sSynchroColumn
+                    // use mapping instead of csv header sSynchroColumn
                     $this->aMappingCsvColumnIndexToFields[] = $this->aMappingCsvColumnNameToFields[$sCsvColumn];
                 } else {
                     if (!array_key_exists($sCsvColumn, $this->aMappedFields)) {
@@ -321,7 +318,6 @@ abstract class CSVCollector extends Collector
                 }
             }
         } else {
-
             foreach ($this->aConfiguredHeaderColumns as $sSynchroColumn) {
                 $this->aMappingCsvColumnIndexToFields[] = [$sSynchroColumn];
                 $this->aMappedFields[$sSynchroColumn] = '';
@@ -333,12 +329,9 @@ abstract class CSVCollector extends Collector
         }
     }
 
-    /**
-     * @inheritdoc
-     */
     protected function CheckColumns($aSynchroColumns, $aColumnsToIgnore, $sSource)
     {
-        Utils::Log(LOG_DEBUG, "[" . get_class($this) . "] Columns [" . var_export($aSynchroColumns, true) . "]");
+        Utils::Log(LOG_DEBUG, '['.get_class($this).'] Columns ['.var_export($aSynchroColumns, true).']');
         foreach ($this->aFields as $sSynchroColumn => $aDefs) {
             if (array_key_exists($sSynchroColumn, $this->aSynchroFieldsToDefaultValues) || in_array($sSynchroColumn, $this->aIgnoredSynchroFields)) {
                 $aColumnsToIgnore[] = $sSynchroColumn;
@@ -356,9 +349,6 @@ class NextLineObject
 
     /**
      * NextLineObject constructor.
-     *
-     * @param $csv_line
-     * @param $aValues
      */
     public function __construct($sCsvLine, $aValues)
     {
@@ -366,17 +356,11 @@ class NextLineObject
         $this->aValues = $aValues;
     }
 
-    /**
-     * @return mixed
-     */
     public function getCsvLine()
     {
         return $this->sCsvLine;
     }
 
-    /**
-     * @return mixed
-     */
     public function getValues()
     {
         return $this->aValues;

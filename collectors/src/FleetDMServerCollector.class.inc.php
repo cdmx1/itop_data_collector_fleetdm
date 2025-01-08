@@ -1,11 +1,11 @@
 <?php
+
 /**
  * @copyright   Copyright (C) 2010-2023 Combodo SARL
  * @license     http://opensource.org/licenses/AGPL-3.0
  */
 class FleetDMServerCollector extends AbstractFleetDMAssetCollector
 {
-
     protected $oOSVersionLookup;
     protected $oOSLicenceLookup;
     protected $oModelLookup;
@@ -17,13 +17,15 @@ class FleetDMServerCollector extends AbstractFleetDMAssetCollector
 
     protected function GetTargetClass()
     {
-       return 'Server';
+        return 'Server';
     }
-	public function CheckToLaunch(array $aOrchestratedCollectors): bool
+
+    public function CheckToLaunch(array $aOrchestratedCollectors): bool
     {
-        if (Utils::GetConfigurationValue('PCCollection', 'no') == 'yes') {
+        if ('yes' == Utils::GetConfigurationValue('PCCollection', 'no')) {
             return true;
         }
+
         return false;
     }
 }

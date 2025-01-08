@@ -1,4 +1,5 @@
 <?php
+
 // Copyright (C) 2014 Combodo SARL
 //
 //   This program is free software; you can redistribute it and/or modify
@@ -17,7 +18,7 @@
 SetupWebPage::AddModule(
     __FILE__, // Path to the current file, all other file names are relative to the directory containing this file
     'itop_data_collector_fleetdm/1.0.0',
-    array(
+    [
         // Identification
         //
         'label' => 'Fleet DM Inventory Data Collector',
@@ -25,21 +26,21 @@ SetupWebPage::AddModule(
 
         // Setup
         //
-        'dependencies' => array(),
+        'dependencies' => [],
         'mandatory' => false,
         'visible' => true,
         // Components
         //
-        'datamodel' => array(
-            "collectors/main.php"
-        ),
-        'webservice' => array(),
-        'data.struct' => array(
+        'datamodel' => [
+            'collectors/main.php',
+        ],
+        'webservice' => [],
+        'data.struct' => [
             // add your 'structure' definition XML files here,
-        ),
-        'data.sample' => array(
+        ],
+        'data.sample' => [
             // add your sample data XML files here,
-        ),
+        ],
 
         // Documentation
         //
@@ -48,8 +49,8 @@ SetupWebPage::AddModule(
 
         // Default settings
         //
-        'settings' => array(
+        'settings' => [
             // Module specific settings go here, if any
-        ),
-    )
+        ],
+    ]
 );

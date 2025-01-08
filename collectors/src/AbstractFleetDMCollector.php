@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @copyright   Copyright (C) 2010-2023 Combodo SARL
  * @license     http://opensource.org/licenses/AGPL-3.0
@@ -6,29 +7,25 @@
 abstract class AbstractFleetDMCollector extends JsonCollector
 {
     protected $oFleetDMCollectionPlan;
-    /**
-     * @inheritdoc
-     */
+
     public function __construct()
     {
         parent::__construct();
     }
 
-    /**
-     * @inheritdoc
-     */
     public function Init(): void
     {
         parent::Init();
         $this->oFleetDMCollectionPlan = FleetDMCollectionPlan::GetPlan();
     }
 
-    public function GetFleetDMCollectionPlan() {
+    public function GetFleetDMCollectionPlan()
+    {
         return $this->oFleetDMCollectionPlan;
     }
 
     /**
-     * Runs the configured query to start fetching the data from the database
+     * Runs the configured query to start fetching the data from the database.
      *
      * @see Collector::Prepare()
      */
@@ -47,7 +44,7 @@ abstract class AbstractFleetDMCollector extends JsonCollector
     //     // Read the SQL query from the configuration
     //     $sSQLQueryName =  $this->GetSQLQueryName(); // by default "_query"
     //     $sQuery = Utils::GetConfigurationValue(get_class($this) .$sSQLQueryName, '');
-	//     if ($sQuery == '') {
+    //     if ($sQuery == '') {
     //         // Try all lowercase
     //         $sQuery = Utils::GetConfigurationValue(strtolower(get_class($this)) . $sSQLQueryName, '');
     //     }
@@ -83,36 +80,37 @@ abstract class AbstractFleetDMCollector extends JsonCollector
     //     return true;
     // }
 
-	// protected function TestIfTableExistsInFleetDM($sTableName){
-	// 	if($this->oDB == null){
-	// 		$this->Connect();
-	// 	}
-	// 	$oExistsStatement = $this->oDB->query("SHOW TABLES LIKE '$sTableName'");
-	// 	if ($oExistsStatement === false) {
-	// 		$aInfo = $this->oDB->errorInfo();
-	// 		Utils::Log(LOG_ERR, "[" . get_class($this) . "] Failed to prepare the query: SHOW TABLES LIKE '$sTableName'. Reason: " . $aInfo[0] . ', ' . $aInfo[2]);
-	// 		return false;
-	// 	}
+    // protected function TestIfTableExistsInFleetDM($sTableName){
+    // 	if($this->oDB == null){
+    // 		$this->Connect();
+    // 	}
+    // 	$oExistsStatement = $this->oDB->query("SHOW TABLES LIKE '$sTableName'");
+    // 	if ($oExistsStatement === false) {
+    // 		$aInfo = $this->oDB->errorInfo();
+    // 		Utils::Log(LOG_ERR, "[" . get_class($this) . "] Failed to prepare the query: SHOW TABLES LIKE '$sTableName'. Reason: " . $aInfo[0] . ', ' . $aInfo[2]);
+    // 		return false;
+    // 	}
 
-	// 	if ($oExistsStatement->fetch()){
-	// 		return true;
-	// 	} else {
-	// 		return false;
-	// 	}
-	// }
+    // 	if ($oExistsStatement->fetch()){
+    // 		return true;
+    // 	} else {
+    // 		return false;
+    // 	}
+    // }
 
     /**
-     * Get the end of SQL parameter name (prefixed by class name) in the config file
+     * Get the end of SQL parameter name (prefixed by class name) in the config file.
      *
      * @return mixed|string
+     *
      * @throws Exception
      */
-	protected function GetSQLQueryName()
+    protected function GetSQLQueryName()
     {
-       return "_query";
+        return '_query';
     }
 
-	protected function AddOtherParams(&$sQuery)
+    protected function AddOtherParams(&$sQuery)
     {
     }
 }

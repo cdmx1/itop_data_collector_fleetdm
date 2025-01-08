@@ -1,9 +1,10 @@
 <?php
 
 /**
- * Fetch data from an API using CURL
+ * Fetch data from an API using CURL.
  *
  * @param string $apiUrl The API URL to fetch data from
+ *
  * @return array The API data as an associative array
  */
 function fetchApiData($apiUrl)
@@ -28,8 +29,9 @@ function fetchApiData($apiUrl)
 /**
  * Replace placeholders in the JSON template with actual values.
  *
- * @param mixed $data The JSON template data (could be array or string)
+ * @param mixed $data         The JSON template data (could be array or string)
  * @param array $placeholders Array of placeholders and their values
+ *
  * @return mixed The JSON data with placeholders replaced
  */
 function replacePlaceholders($data, $placeholders)
@@ -44,18 +46,20 @@ function replacePlaceholders($data, $placeholders)
     elseif (is_string($data)) {
         foreach ($placeholders as $placeholder => $actualValue) {
             // Add $ prefix and suffix when replacing placeholders
-            $data = str_replace('$' . $placeholder . '$', $actualValue, $data);
+            $data = str_replace('$'.$placeholder.'$', $actualValue, $data);
         }
     }
+
     return $data;
 }
 
 /**
  * Build an array of placeholders from the mapping array and API data.
  *
- * @param array $mappingArray The mapping array of template keys to API keys
- * @param array $apiData The data fetched from the API
+ * @param array $mappingArray  The mapping array of template keys to API keys
+ * @param array $apiData       The data fetched from the API
  * @param array $defaultValues The default values for each placeholder
+ *
  * @return array The placeholders array where keys are placeholders and values are API data or defaults
  */
 function buildPlaceholdersArray($mappingArray, $apiData, $defaultValues)
@@ -65,16 +69,18 @@ function buildPlaceholdersArray($mappingArray, $apiData, $defaultValues)
         // Use the API value if available, otherwise use the default value
         $placeholders[$placeholder] = isset($apiData[$apiKey]) ? $apiData[$apiKey] : $defaultValues[$placeholder];
     }
+
     return $placeholders;
 }
 
 /**
  * Main function to update the JSON template with actual data from an API.
  *
- * @param string $jsonTemplate The JSON template with placeholders
- * @param array $mappingArray The mapping array linking template keys to API keys
- * @param string $apiUrl The URL to fetch the API data
- * @param array $defaultValues The default values to use when API data is missing
+ * @param string $jsonTemplate  The JSON template with placeholders
+ * @param array  $mappingArray  The mapping array linking template keys to API keys
+ * @param string $apiUrl        The URL to fetch the API data
+ * @param array  $defaultValues The default values to use when API data is missing
+ *
  * @return string The updated JSON string
  */
 function updateJsonTemplate($jsonTemplate, $mappingArray, $apiUrl, $defaultValues)
@@ -139,7 +145,7 @@ $jsonTemplate = '{
 }';
 
 // Example API URL
-$apiUrl = "https://api.example.com/data";
+$apiUrl = 'https://api.example.com/data';
 
 // Example mapping array without $ prefix and suffix
 $mappingArray = [
@@ -149,7 +155,7 @@ $mappingArray = [
     'synchro_user' => 'user_id',
     'contact_to_notify' => 'notify_contact_id',
     'suffix' => 'api_suffix',
-    'full_load_interval' => 'load_interval'
+    'full_load_interval' => 'load_interval',
 ];
 
 // Example default values for placeholders
@@ -160,7 +166,7 @@ $defaultValues = [
     'synchro_user' => 'default_user',
     'contact_to_notify' => 'default_contact',
     'suffix' => 'DEF',
-    'full_load_interval' => 'weekly'
+    'full_load_interval' => 'weekly',
 ];
 
 // Update the JSON template using API data, mapping array, and default values

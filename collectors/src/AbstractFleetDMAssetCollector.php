@@ -1,34 +1,37 @@
 <?php
+
 /**
  * @copyright   Copyright (C) 2010-2023 Combodo SARL
  * @license     http://opensource.org/licenses/AGPL-3.0
  */
 abstract class AbstractFleetDMAssetCollector extends AbstractFleetDMCollector
 {
-	protected function GetSQLQueryName()
+    protected function GetSQLQueryName()
     {
-        $sSQLQueryName = "_query";
-        if (Utils::GetConfigurationValue("use_asset_categories", 'no') == 'yes') {
-            $sSQLQueryName = "_with_categories_query";
+        $sSQLQueryName = '_query';
+        if ('yes' == Utils::GetConfigurationValue('use_asset_categories', 'no')) {
+            $sSQLQueryName = '_with_categories_query';
         }
+
         return $sSQLQueryName;
     }
 
-	protected function AddOtherParams(&$sQuery)
+    protected function AddOtherParams(&$sQuery)
     {
-        if (Utils::GetConfigurationValue("use_asset_categories", 'no') == 'yes') {
-	        $sSQLQueryName =   '_getCategoriesFromItop';
-	        $sQueryITop = Utils::GetConfigurationValue(get_class($this) .$sSQLQueryName, '');
-	        if ($sQueryITop == '') {
-		        // Try all lowercase
-		        $sQueryITop = Utils::GetConfigurationValue(strtolower(get_class($this)) . $sSQLQueryName, '');
-	        }
+        if ('yes' == Utils::GetConfigurationValue('use_asset_categories', 'no')) {
+            $sSQLQueryName = '_getCategoriesFromItop';
+            $sQueryITop = Utils::GetConfigurationValue(get_class($this).$sSQLQueryName, '');
+            if ('' == $sQueryITop) {
+                // Try all lowercase
+                $sQueryITop = Utils::GetConfigurationValue(strtolower(get_class($this)).$sSQLQueryName, '');
+            }
 
-	        $oRestClient = new RestClient();
-            $aResult = $oRestClient->Get("FleetDMAssetCategory", $sQueryITop, "name");
+            $oRestClient = new RestClient();
+            $aResult = $oRestClient->Get('FleetDMAssetCategory', $sQueryITop, 'name');
 
-             if(is_null($aResult['objects'])) {
-                Utils::Log(LOG_INFO, "No FleetDMAssetCategory found in iTop with request: ".$sSQLQueryName);
+            if (is_null($aResult['objects'])) {
+                Utils::Log(LOG_INFO, 'No FleetDMAssetCategory found in iTop with request: '.$sSQLQueryName);
+
                 return;
             }
             $aListCategories = [];
@@ -37,7 +40,7 @@ abstract class AbstractFleetDMAssetCollector extends AbstractFleetDMCollector
             }
 
             $sQuery = str_replace('#ERROR_UNDEFINED_PLACEHOLDER_categorielist#', implode("','", $aListCategories), $sQuery);
-	        Utils::Log(LOG_DEBUG, "************".$sQuery);
+            Utils::Log(LOG_DEBUG, '************'.$sQuery);
         }
     }
 
