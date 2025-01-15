@@ -11,6 +11,22 @@ This PHP-based collector integrates FleetDM with iTop, allowing users to synchro
 - **PHP**: Installed and configured on the server.
 - **Composer**: Installed to manage dependencies.
 
+# Configuration
+
+1. **Copy the example file**  
+   Copy the example file into your `conf` folder as `params.local.xml`
+
+2. **Update iTop connection settings**  
+   Modify the values as follows:
+   - `<itop_url>`: Set this to the actual URL of your iTop instance (e.g., `http://localhost`).
+   - `<itop_login>`: Set this to the actual username of your iTop admin account (e.g., `admin`).
+   - `<itop_password>`: Set this to the actual password of your iTop admin account (e.g., `xxxxxxxx`).
+
+3. **Update FleetDM connection settings**  
+   Modify the values as follows:
+   - `<fleetdm_url>`: Set this to the actual URL of your FleetDM instance (e.g., `https://fxx.xxxx.xx`).
+   - `<fleetdm_token>`: Set this to the actual token for your FleetDM instance (e.g., `xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`).
+
 ## Installation
 
 1. **Download the Collector**
@@ -21,3 +37,4 @@ This PHP-based collector integrates FleetDM with iTop, allowing users to synchro
    sudo apt install php7.4 php7.4-xml 
 
    php ./exec.php
+

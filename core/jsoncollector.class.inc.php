@@ -101,11 +101,10 @@ abstract class JsonCollector extends Collector
             $aDataGet = ['hosts' => []];
         }
         $iSynchroTimeout = (int) Utils::GetConfigurationValue('itop_synchro_timeout', 600); // timeout in seconds, for a synchro to run
-
-        $sBearerToken = isset($aParamsSourceJson['bearer_token']) ? $aParamsSourceJson['bearer_token'] : null;
-
-        $jsonUrl = Utils::GetConfigurationValue('jsonurl', '');
-        $sBaseUrl = $jsonUrl.'/api/v1/fleet/labels/';
+        
+        $fleetDmUrl = Utils::GetConfigurationValue('fleetdm_url', '');
+        $sBearerToken = Utils::GetConfigurationValue('fleetdm_token', '');
+        $sBaseUrl = $fleetDmUrl.'/api/v1/fleet/labels/';
         Utils::Log(LOG_INFO, 'JSON URL from config: '.$sBaseUrl);
 
         $labels = $aParamsSourceJson['labels'];
@@ -122,9 +121,6 @@ abstract class JsonCollector extends Collector
             $labelId = (string) $label['fleet_dm_id'];
             $type = $label['api_params']['type'];
             $this->sURL = $sBaseUrl.$labelId.'/hosts';
-
-            $iSynchroTimeout = (int) Utils::GetConfigurationValue('itop_synchro_timeout', 600); // timeout in seconds, for a synchro to run
-            $sBearerToken = isset($aParamsSourceJson['bearer_token']) ? $aParamsSourceJson['bearer_token'] : null;
 
             // Fetch the data for the current label's URL using the bearer token (if provided)
             $sFileJson = $this->fetchDataWithBearerToken($this->sURL, $sBearerToken);
@@ -272,11 +268,11 @@ abstract class JsonCollector extends Collector
         foreach ($aCurrentFieldKeys as $key => $sPath) {
             if (0 == $this->iIdx) {
                 // Log key and index position
-                Utils::Log(LOG_INFO, "Processing key: $key with index: ".array_search($key, $aCurrentFieldKeys));
+                Utils::Log(LOG_DEBUG, "Processing key: $key with index: ".array_search($key, $aCurrentFieldKeys));
             }
             // Log the JSON key path
             $aJsonKeyPath = explode('/', $sPath);
-            Utils::Log(LOG_INFO, 'Searching for value in path: '.implode(' -> ', $aJsonKeyPath));
+            Utils::Log(LOG_DEBUG, 'Searching for value in path: '.implode(' -> ', $aJsonKeyPath));
 
             // Search for the value in the data
             $aValue = $this->SearchValue($aJsonKeyPath, $aData);
@@ -295,18 +291,18 @@ abstract class JsonCollector extends Collector
                 } else {
                     // Brand exists, set the brand ID from the returned brandResult
                     $brandId = $brandResult->brandId;
-                    Utils::Log(LOG_INFO, "Brand already exists with ID: $brandId");
+                    Utils::Log(LOG_DEBUG, "Brand already exists with ID: $brandId");
                     $brandData['brand_id'] = $brandId; // Set the existing brand ID
                 }
             }
             if (empty($aValue) && array_key_exists($key, $this->aSynchroFieldsToDefaultValues)) {
                 // Use default value if field is empty
                 $sDefaultValue = $this->aSynchroFieldsToDefaultValues[$key];
-                Utils::Log(LOG_INFO, "Using default value for $key: $sDefaultValue");
+                Utils::Log(LOG_DEBUG, "Using default value for $key: $sDefaultValue");
                 $aDataToSynchronize[$key] = $sDefaultValue;
             } elseif (!is_null($aValue)) {
                 // Log the actual value found
-                Utils::Log(LOG_INFO, "Found value for $key: ".print_r($aValue, true));
+                Utils::Log(LOG_DEBUG, "Found value for $key: ".print_r($aValue, true));
                 $aDataToSynchronize[$key] = $aValue;
             }
         }
@@ -315,7 +311,7 @@ abstract class JsonCollector extends Collector
         $osFamilyId = $aDataToSynchronize['osfamily_id'];
         $osVersionId = $aDataToSynchronize['osversion_id'];
         $type = $aDataToSynchronize['type'];
-        Utils::Log(LOG_INFO, "Found value for $key: ".print_r($aValue, true));
+        Utils::Log(LOG_DEBUG, "Found value for $key: ".print_r($aValue, true));
         if ('desktop' === $type || 'laptop' === $type) {
             $otype = 'PC';
         } elseif ('server' === $type) {
@@ -331,20 +327,20 @@ abstract class JsonCollector extends Collector
             if (0 != $createResponse['code']) {
                 Utils::Log(LOG_ERR, "Failed to create model: {$createResponse['message']}");
             } else {
-                Utils::Log(LOG_INFO, "Model created successfully with ID: {$createResponse['id']}");
+                Utils::Log(LOG_DEBUG, "Model created successfully with ID: {$createResponse['id']}");
                 $aDataToSynchronize['model_id'] = $createResponse['id'];
             }
         } else {
-            Utils::Log(LOG_INFO, "Model already exists with ID: {$oResultModelExists->modelId}");
+            Utils::Log(LOG_DEBUG, "Model already exists with ID: {$oResultModelExists->modelId}");
             $aDataToSynchronize['model_id'] = $oResultModelExists->modelId;
         }
         // Step 1: Check if the OS Family exists
         if (!$this->checkOsFamilyExists($osFamilyId)) {
             // OS Family does not exist, create it
             $this->createOsFamily($osFamilyId);
-            Utils::Log(LOG_INFO, 'Created OS Family: '.$osFamilyId);
+            Utils::Log(LOG_DEBUG, 'Created OS Family: '.$osFamilyId);
         } else {
-            Utils::Log(LOG_INFO, 'OS Family already exists: '.$osFamilyId);
+            Utils::Log(LOG_DEBUG, 'OS Family already exists: '.$osFamilyId);
         }
 
         // Step 2: Now check if the OS Version exists for the created or existing OS Family
@@ -354,14 +350,12 @@ abstract class JsonCollector extends Collector
         if (!$resultOsExists) {
             // OS Version does not exist, create it
             $oResult = $this->createOsVersion($osVersionId, $osFamilyId);
-            Utils::Log(LOG_INFO, 'createOsVersion: '.print_r($oResult, true));
-
-            Utils::Log(LOG_INFO, 'Created OS Version: '.$osVersionId.' for OS Family: '.$osFamilyId);
+            Utils::Log(LOG_DEBUG, 'Created OS Version: '.$osVersionId.' for OS Family: '.$osFamilyId);
         } else {
-            Utils::Log(LOG_INFO, 'OS Version already exists: '.$osVersionId);
+            Utils::Log(LOG_DEBUG, 'OS Version already exists: '.$osVersionId);
         }
         $aDataToSynchronize['osversion_id'] = $resultOsVersionId;
-        Utils::Log(LOG_INFO, 'Final data to synchronize: '.json_encode($aDataToSynchronize, JSON_PRETTY_PRINT));
+        Utils::Log(LOG_DEBUG, 'Final data to synchronize: '.json_encode($aDataToSynchronize, JSON_PRETTY_PRINT));
 
         return $aDataToSynchronize;
     }
@@ -376,7 +370,6 @@ abstract class JsonCollector extends Collector
 
         // Perform the search
         $result = $restClient->Get('Brand', $query);
-
         // Check if the search was successful
         if (0 != $result['code'] || empty($result['objects'])) {
             Utils::Log(LOG_INFO, "Brand '$brandName' not found or error in search.");
@@ -386,7 +379,7 @@ abstract class JsonCollector extends Collector
 
         // Extract the brand ID
         $brandId = $result['objects'][array_key_first($result['objects'])]['key'] ?? null;
-        Utils::Log(LOG_INFO, 'Brand found with ID: '.print_r($brandId, true));
+        Utils::Log(LOG_DEBUG, 'Brand found with ID: '.print_r($brandId, true));
 
         // Return an object with the result and brand ID
         return (object) [
@@ -430,7 +423,7 @@ abstract class JsonCollector extends Collector
 
         // Extract the model ID
         $modelId = $result['objects'][array_key_first($result['objects'])]['key'] ?? null;
-        Utils::Log(LOG_INFO, 'Model found with ID: '.print_r($modelId, true));
+        Utils::Log(LOG_DEBUG, 'Model found with ID: '.print_r($modelId, true));
 
         // Return an object with the result and model ID
         return (object) [
@@ -493,7 +486,7 @@ abstract class JsonCollector extends Collector
         $osFamilyId = $familyResult['objects'][array_key_first($familyResult['objects'])]['key']; // Adjust based on your API response structure
 
         // Log the retrieved OS Family ID for debugging
-        Utils::Log(LOG_INFO, 'Retrieved OS Family ID: '.$osFamilyId);
+        Utils::Log(LOG_DEBUG, 'Retrieved OS Family ID: '.$osFamilyId);
 
         // Prepare valid attributes for the OS Version, including the OS family ID
         $validAttributes = [
@@ -527,7 +520,7 @@ abstract class JsonCollector extends Collector
             return null; // or handle it as necessary
         }
         $osVersionId = $result['objects'][array_key_first($result['objects'])]['key'];
-        Utils::Log(LOG_INFO, 'osVersionId: '.print_r($osVersionId, true));
+        Utils::Log(LOG_DEBUG, 'OS Version exists: '.print_r($osVersionId, true));
 
         // Assuming code 0 means success and we have results
         if (0 == $result['code'] && is_array($result['objects']) && !empty($result['objects'])) {

@@ -5,6 +5,9 @@
   <itop_login>admin</itop_login>  <!-- Update with actual iTop admin username -->
   <itop_password>xxxxxxxx</itop_password>  <!-- Update with the actual iTop password -->
 
+  <!-- FleetDM connection settings -->
+  <fleetdm_url>https://fxx.xxxx.xx</fleetdm_url>
+  <fleetdm_token>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</fleetdm_token>
   <!-- Optional: Token-based authentication -->
   <itop_token></itop_token>
   <itop_login_mode></itop_login_mode>
@@ -55,7 +58,6 @@
       <rank>1</rank>
     </collector>
   </collectors_launch_sequence>
-  <jsonurl>https://fdm.xxx.io</jsonurl>
   <FleetDMPCCollector>
     <type>pc</type>
     <labels type="array">
@@ -91,7 +93,6 @@
       </json_data>
       <version>1.0</version>
     </jsonpost>
-    <bearer_token>xxxxx</bearer_token>
     <path>hosts</path>
     <fields>
       <primary_key>uuid</primary_key>   
@@ -136,7 +137,6 @@
       </json_data>
       <version>1.0</version>
     </jsonpost>
-    <bearer_token>xxxxx</bearer_token>
     <path>hosts</path>
     <fields>
       <primary_key>uuid</primary_key>   
