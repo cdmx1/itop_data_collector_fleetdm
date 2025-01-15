@@ -27,6 +27,26 @@ This PHP-based collector integrates FleetDM with iTop, allowing users to synchro
    - `<fleetdm_url>`: Set this to the actual URL of your FleetDM instance (e.g., `https://fxx.xxxx.xx`).
    - `<fleetdm_token>`: Set this to the actual token for your FleetDM instance (e.g., `xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`).
 
+# Configuring the FleetDM Collectors
+
+To configure the FleetDM collectors for different device types (PC, Laptop, and Server), follow these steps:
+
+1. **Update Organization ID (`org_id`)**
+   - Set the `org_id` field in the configuration with the actual organization name from your iTop instance.
+
+2. **Update FleetDM ID for Laptops**
+   - Locate the label where the `type` is set to `laptop`. 
+   - Update the corresponding `fleet_dm_id` with the label ID for laptops from your FleetDM.
+
+3. **Update FleetDM ID for Desktops**
+   - Locate the label where the `type` is set to `desktop`.
+   - Update the corresponding `fleet_dm_id` with the label ID for desktops from your FleetDM.
+
+4. **Update FleetDM ID for Servers**
+   - In the `FleetDMServerCollector` section, locate the label where the `type` is set to `server`.
+   - Update the corresponding `fleet_dm_id` with the label ID for servers from your FleetDM.
+
+
 ## Installation
 
 1. **Download the Collector**
